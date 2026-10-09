@@ -58,23 +58,4 @@ public class ViolationController {
         }
         return HttpUtils.produceBadRequestResponse("Violation already resolved");
     }
-
-    @PostMapping("/appeal")
-    public ResponseEntity<?> raiseAppeal(@RequestParam AppealDto appeal){
-        Optional<User> currentUser = authUtils.getCurrentUser();
-
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
-        }
-
-        Optional<Violation> violation = violationService.findById(appeal.violationId());
-
-        if (violation.isEmpty() || currentUser.get() != violation.get().) {
-            return HttpUtils.produceNotFoundResponse("Violation not found");
-        }
-
-        Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(violation.get().getLicencePlate());
-
-        appealService.
-    }
 }

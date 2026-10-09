@@ -25,19 +25,9 @@ public class Violation {
     private String message;
     @NotNull
     private Double price;
-    @NotBlank
-    private String licencePlate;
-    @NotNull
-    private Double latitude;
-    @NotNull
-    private Double longitude;
     @NotNull
     private Boolean active;
 
-    @ManyToOne(optional = false)
-    private Area area;
-    @ManyToOne(optional = false)
-    private User officer;
     @OneToOne(optional = false)
     private ParkingCheckLog parkingCheckLog;
 }

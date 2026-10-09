@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/rest/ai")
+@RequestMapping("/rest/public/ai")
 public class AiController {
 
     private final AiService aiService;

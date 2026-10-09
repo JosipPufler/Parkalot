@@ -4,4 +4,8 @@ public enum Role {
     USER,
     OFFICER,
     ADMIN;
+
+    public String getRoleName(){
+        return "ROLE_" + name();
+    }
 }

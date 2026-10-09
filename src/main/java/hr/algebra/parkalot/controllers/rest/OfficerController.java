@@ -65,7 +65,7 @@ public class OfficerController {
             return ResponseEntity.ok(new PermitCheckResultDto(requestDto, timestamp, true,
                     new PermitDto(permit.get()), null));
         } else {
-            Violation violation = violationService.issueViolation(currentUser.get(), currentArea, requestDto.licencePlate(), parkingLog);
+            Violation violation = violationService.issueViolation(parkingLog);
             return ResponseEntity.ok(new PermitCheckResultDto(requestDto, timestamp, false,
                     null, new ViolationDto(violation)));
         }

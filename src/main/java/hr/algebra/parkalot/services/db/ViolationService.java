@@ -20,11 +20,8 @@ public class ViolationService extends GeneralCrudService<Violation, ViolationRep
     }
 
     @Transactional
-    public Violation issueViolation(User officer, Area area, String licencePlate, ParkingCheckLog parkingCheckLog){
+    public Violation issueViolation(ParkingCheckLog parkingCheckLog){
         return save(Violation.builder()
-                .area(area)
-                .licencePlate(licencePlate)
-                .officer(officer)
                 .timestamp(LocalDateTime.now())
                 .price(TICKET_PRICE)
                 .parkingCheckLog(parkingCheckLog)
@@ -32,6 +29,6 @@ public class ViolationService extends GeneralCrudService<Violation, ViolationRep
     }
 
     public List<Violation> findViolationsByLicencePlate(String licencePlate){
-        return repository.findByLicencePlate(licencePlate);
+        return repository.findByParkingCheckLogLicencePlate(licencePlate);
     }
 }

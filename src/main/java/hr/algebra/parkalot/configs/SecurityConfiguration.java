@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.configs;
 
-
+import hr.algebra.parkalot.models.Role;
 import hr.algebra.parkalot.services.CustomUserDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +18,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.NullSecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableAsync
@@ -28,24 +30,111 @@ public class SecurityConfiguration {
     private final TokenFilter tokenFilter;
     private final PasswordEncoder passwordEncoder;
     private final AuthEntryPoint unauthorizedHandler;
+    private final LoginHandler loginHandler;
+    private final LogoutHandler logoutHandler;
 
-    private static final String[] AUTH_WHITELIST = { "/auth/**", "/logout", "/mvc/public/**", "/rest/public/**", "/rest/ai/**", "/" };
+    private static final String[] REST_PUBLIC_WHITELIST = { "/rest/auth/**", "/logout", "/mvc/public/**", "/rest/public/**", "/" };
+    private static final String[] MVC_PUBLIC_WHITELIST = { "/logout", "/mvc/public/**", "/" };
+    private static final String[] MVC_ADMIN_LIST = { "/mvc/admin/**" };
+    private static final String[] REST_ADMIN_LIST = { "/rest/admin/**" };
 
     @Bean
     @Order(1)
     public SecurityFilterChain apiChain(HttpSecurity http) {
         http
-                .securityMatcher("/rest/**")
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers(AUTH_WHITELIST).permitAll()
-                        .anyRequest().authenticated())
-                .authenticationProvider(authenticationProvider(passwordEncoder))
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+            .headers(headers -> headers
+                    .contentSecurityPolicy(csp -> csp
+                            .policyDirectives(
+                                    "default-src 'self'; " +
+                                            "script-src 'self' https://maps.googleapis.com" +
+                                            "  https://www.paypal.com" +
+                                            "  https://*.paypal.com" +
+                                            "  https://www.paypalobjects.com" +
+                                            "  https://*.paypalobjects.com; " +
+                                            "style-src 'self' 'unsafe-inline'; " +
+                                            "img-src 'self' data: https:; " +
+                                            "font-src 'self'; " +
+                                            "connect-src 'self' https://www.paypal.com https://*.paypal.com https://maps.googleapis.com; " +
+                                            "frame-src https://www.paypal.com https://*.paypal.com; " +
+                                            "object-src 'none'; " +
+                                            "base-uri 'self'; " +
+                                            "form-action 'self';"
+                            )
+                    )
+            )
+            .securityMatcher("/rest/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .securityContext(sc ->
+                    sc.securityContextRepository(new NullSecurityContextRepository())
+            )
+            .authorizeHttpRequests(auth ->
+                    auth.requestMatchers(REST_PUBLIC_WHITELIST).permitAll()
+                            /*.requestMatchers(REST_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
+                            .anyRequest().hasAnyRole(
+                                    Role.ADMIN.getRoleName(),
+                                    Role.USER.getRoleName()
+                            )*/
+            )
+            .authenticationProvider(authenticationProvider(passwordEncoder))
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
+            .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+    /*@Bean
+    @Order(2)
+    public SecurityFilterChain mvcChain(HttpSecurity http) {
+        http
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives(
+                                        "default-src 'self'; " +
+                                                "script-src 'self' https://maps.googleapis.com" +
+                                                "  https://www.paypal.com" +
+                                                "  https://*.paypal.com" +
+                                                "  https://www.paypalobjects.com" +
+                                                "  https://*.paypalobjects.com; " +
+                                                "style-src 'self' 'unsafe-inline'; " +
+                                                "img-src 'self' data: https:; " +
+                                                "font-src 'self'; " +
+                                                "connect-src 'self' https://www.paypal.com https://*.paypal.com https://maps.googleapis.com; " +
+                                                "frame-src https://www.paypal.com https://*.paypal.com; " +
+                                                "object-src 'none'; " +
+                                                "base-uri 'self'; " +
+                                                "form-action 'self';"
+                                )
+                        )
+                )
+                .userDetailsService(userDetailsService)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(new CookieCsrfTokenRepository()))
+                .authorizeHttpRequests(authorize ->
+                        authorize
+                                .requestMatchers(MVC_PUBLIC_WHITELIST).permitAll()
+                                .requestMatchers(
+                                        "/js/**",
+                                        "/css/**",
+                                        "/images/**",
+                                        "/webjars/**",
+                                        "/favicon.ico"
+                                ).permitAll()
+                                .requestMatchers(MVC_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
+                                .anyRequest().hasAnyRole(Role.ADMIN.getRoleName(), Role.USER.getRoleName())
+                )
+                .formLogin(httpSecurityFormLoginConfigurer -> httpSecurityFormLoginConfigurer
+                        .loginPage("/mvc/public/auth/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler(loginHandler)
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(logoutHandler)
+                        .permitAll()
+                );
+        return http.build();
+    }*/
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http, PasswordEncoder encoder) {

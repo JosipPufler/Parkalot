@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}"
+      lang="en">
+
+<head>
+    <title>Parking Areas</title>
+
+    <th:block layout:fragment="pageStyles">
+        <link rel="stylesheet"
+              href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <link rel="stylesheet" th:href="@{/css/areas.css}">
+    </th:block>
+</head>
+
+<body>
+<div layout:fragment="content" class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-1">Parking Areas</h1>
+            <p class="text-muted mb-0">
+                Explore permit zones and their requirements.
+            </p>
+        </div>
+
+        <span class="badge text-bg-primary" id="area-count">
+            Loading areas...
+        </span>
+    </div>
+
+    <div class="map-wrapper">
+        <div id="parking-map"></div>
+
+        <div class="card shadow map-panel">
+            <div class="card-body">
+                <h2 class="h6">Map controls</h2>
+
+                <input type="search"
+                       id="area-search"
+                       class="form-control mb-3"
+                       placeholder="Search parking areas...">
+
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="show-areas"
+                           checked>
+                    <label class="form-check-label" for="show-areas">
+                        Show permit zones
+                    </label>
+                </div>
+
+                <hr>
+
+                <div class="small">
+                    <span class="d-inline-block rounded me-2"
+                          style="width: 12px; height: 12px;
+                                 background: #0d6efd"></span>
+                    Permit zone
+                </div>
+
+                <div id="map-status"
+                     class="small text-muted mt-3"
+                     role="status">
+                    Loading map data...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:src="@{/js/areas.js}"></script>
+</th:block>
+</body>
+</html>
