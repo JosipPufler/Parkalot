@@ -16,9 +16,10 @@ $(function () {
         const popup = document.createElement("div");
         const title = document.createElement("strong");
         const id = document.createElement("div");
+        id.style.textAlign = "center";
 
         title.textContent = area.name;
-        id.textContent = `Area ID: ${area.id}`;
+        id.textContent = `${area.zone}`;
 
         popup.append(title, id);
 
@@ -98,7 +99,7 @@ $(function () {
     });
 
     $.ajax({
-        url: "/rest/area",
+        url: "/rest/public/area",
         method: "GET",
         dataType: "json"
     })

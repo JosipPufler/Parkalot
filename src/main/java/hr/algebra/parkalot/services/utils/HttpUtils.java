@@ -27,4 +27,8 @@ public final class HttpUtils {
     public static ResponseEntity<ProblemDetail> produceNotFoundResponse(String message) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message));
     }
+
+    public static ResponseEntity<ProblemDetail> produceInternalErrorResponse(String message) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, message));
+    }
 }

@@ -1,20 +1,27 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.models.Zone;
 import hr.algebra.parkalot.models.entity.Area;
 import hr.algebra.parkalot.models.dto.AreaDto;
 import hr.algebra.parkalot.models.dto.CoordinateDto;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.utils.HttpUtils;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKBWriter;
 import org.springframework.data.geo.Point;
-import org.springframework.data.geo.Polygon;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/rest/area")
+@RequestMapping("/rest/public/area")
 @RequiredArgsConstructor
 public class AreaController {
     private final AreaService areaService;
@@ -26,21 +33,39 @@ public class AreaController {
             return HttpUtils.produceNotFoundResponse("No area for the given coordinates: " + coordinateDto);
         }
 
-        return ResponseEntity.ok(new AreaDto(currentArea.get()));
+        try {
+            return ResponseEntity.ok(new AreaDto(currentArea.get()));
+        } catch (ParseException e) {
+            return HttpUtils.produceInternalErrorResponse(e.getMessage());
+        }
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllAreas(){
-        return ResponseEntity.ok(areaService.findAll().stream().map(AreaDto::new).toList());
+    public ResponseEntity<?> getAllAreas() throws ParseException {
+        List<AreaDto> list = new ArrayList<>();
+        for (Area area : areaService.findAll()) {
+            AreaDto areaDto = new AreaDto(area);
+            list.add(areaDto);
+        }
+        return ResponseEntity.ok(
+                list
+        );
     }
 
     @PostMapping
     public ResponseEntity<?> createArea(@RequestBody AreaDto areaDto){
+        Coordinate[] coordinates = areaDto.coordinates().stream()
+                .map(c -> new Coordinate(c.longitude(), c.latitude()))
+                .toArray(Coordinate[]::new);
+
+        Polygon polygon = new GeometryFactory().createPolygon(coordinates);
+        byte[] polygonWkb = new WKBWriter().write(polygon);
+
         Area area = Area.builder()
-                .areaPolygon(new Polygon(areaDto.coordinates().stream()
-                        .map(x -> new Point(x.latitude(), x.longitude())).toList()))
-                .zone(areaDto.zone())
-                .name(areaDto.name()).build();
+                .areaPolygon(polygonWkb)
+                .zone(Zone.valueOf(areaDto.zone()))
+                .name(areaDto.name())
+                .build();
         return ResponseEntity.ok(areaService.save(area));
     }
 }

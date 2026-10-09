@@ -6,6 +6,6 @@ public enum Role {
     ADMIN;
 
     public String getRoleName(){
-        return "ROLE_" + name();
+        return name();
     }
 }

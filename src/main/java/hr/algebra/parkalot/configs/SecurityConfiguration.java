@@ -83,7 +83,7 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    /*@Bean
+    @Bean
     @Order(2)
     public SecurityFilterChain mvcChain(HttpSecurity http) {
         http
@@ -110,6 +110,7 @@ public class SecurityConfiguration {
                 .userDetailsService(userDetailsService)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(new CookieCsrfTokenRepository()))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize ->
                         authorize
                                 .requestMatchers(MVC_PUBLIC_WHITELIST).permitAll()
@@ -123,6 +124,7 @@ public class SecurityConfiguration {
                                 .requestMatchers(MVC_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
                                 .anyRequest().hasAnyRole(Role.ADMIN.getRoleName(), Role.USER.getRoleName())
                 )
+                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(httpSecurityFormLoginConfigurer -> httpSecurityFormLoginConfigurer
                         .loginPage("/mvc/public/auth/login")
                         .loginProcessingUrl("/login")
@@ -134,7 +136,7 @@ public class SecurityConfiguration {
                         .permitAll()
                 );
         return http.build();
-    }*/
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http, PasswordEncoder encoder) {

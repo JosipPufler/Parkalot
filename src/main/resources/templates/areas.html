@@ -9,7 +9,7 @@
 
     <th:block layout:fragment="pageStyles">
         <link rel="stylesheet"
-              href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+              href="/css/leaflet.css">
         <link rel="stylesheet" th:href="@{/css/areas.css}">
     </th:block>
 </head>
@@ -72,8 +72,8 @@
 </div>
 
 <th:block layout:fragment="pageScripts">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script th:src="@{/js/areas.js}"></script>
+    <script src="/js/leaflet.js"></script>
+    <script src="/js/areas.js"></script>
 </th:block>
 </body>
 </html>
