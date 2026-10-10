@@ -11,7 +11,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/auth")
+@RequestMapping("/mvc/public/auth")
 @RequiredArgsConstructor
 public class UserMvcController {
     private final UserService userService;
@@ -40,8 +40,7 @@ public class UserMvcController {
 
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
-        RegistrationForm form = new RegistrationForm();
-        model.addAttribute(MODEL_ATTRIBUTE_REGISTRATION_FORM, form);
+        model.addAttribute(MODEL_ATTRIBUTE_REGISTRATION_FORM, new RegistrationForm());
         return REGISTER_PAGE;
     }
 

@@ -1,8 +1,6 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.dto.AppealDto;
 import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Vehicle;
 import hr.algebra.parkalot.models.entity.Violation;
 import hr.algebra.parkalot.models.dto.ViolationDto;
 import hr.algebra.parkalot.services.db.AppealService;
@@ -33,7 +31,7 @@ public class ViolationController {
             return HttpUtils.produceUnauthorizedResponse("Unauthorized");
         }
 
-        List<Violation> violations = vehicleService.findByUser(currentUser.get()).stream()
+        List<Violation> violations = vehicleService.findByOwner(currentUser.get()).stream()
                 .flatMap(vehicle -> violationService.findViolationsByLicencePlate(vehicle.getLicencePlate()).stream()).toList();
         return ResponseEntity.ok(violations.stream().map(ViolationDto::new));
     }

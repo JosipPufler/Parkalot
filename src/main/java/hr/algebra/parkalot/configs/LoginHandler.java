@@ -26,18 +26,18 @@ public class LoginHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        String username = authentication.getName();
+        String email = authentication.getName();
 
-        Optional<User> byUsername = userService.findByEmail(username);
-        if (byUsername.isEmpty()) {
+        Optional<User> byEmail = userService.findByEmail(email);
+        if (byEmail.isEmpty()) {
             response.sendRedirect("/mvc/public/auth/login");
             return;
         }
 
-        ResponseCookie access = jwtService.generateAccessToken(byUsername.get());
+        ResponseCookie access = jwtService.generateAccessToken(byEmail.get());
 
         response.addHeader("Set-Cookie", access.toString());
 
-        response.sendRedirect("/mvc/public/areas");
+        response.sendRedirect("/mvc/areas");
     }
 }

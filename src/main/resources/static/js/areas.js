@@ -99,7 +99,7 @@ $(function () {
     });
 
     $.ajax({
-        url: "/rest/public/area",
+        url: "/rest/area",
         method: "GET",
         dataType: "json"
     })
@@ -108,4 +108,168 @@ $(function () {
             count.text("Unavailable");
             status.text("Could not load parking areas. Please try again.");
         });
+
+
+// Admin area drawing
+    const drawingLayer = L.featureGroup().addTo(map);
+
+    let drawing = false;
+    let vertices = [];
+    let previewPolygon = null;
+
+    const drawingStatus = $("#drawing-status");
+    const startButton = $("#start-drawing");
+    const undoButton = $("#undo-vertex");
+    const clearButton = $("#clear-drawing");
+    const saveButton = $("#save-area");
+
+    function updateDrawingControls() {
+        drawingStatus.text(
+            vertices.length === 0
+                ? "No vertices selected."
+                : `${vertices.length} vertices selected. ${
+                    drawing ? "Click the map to add more." : ""
+                }`
+        );
+
+        undoButton.prop("disabled", vertices.length === 0);
+        clearButton.prop("disabled", vertices.length === 0);
+        saveButton.prop("disabled", vertices.length < 3);
+        startButton.prop("disabled", drawing);
+    }
+
+    function renderDrawing() {
+        drawingLayer.clearLayers();
+
+        vertices.forEach((point, index) => {
+            L.circleMarker(point, {
+                radius: 5,
+                color: "#dc3545",
+                fillColor: "#dc3545",
+                fillOpacity: 1
+            })
+                .bindTooltip(`Vertex ${index + 1}`)
+                .addTo(drawingLayer);
+        });
+
+        if (vertices.length >= 2) {
+            previewPolygon = L.polygon(vertices, {
+                color: "#dc3545",
+                weight: 2,
+                dashArray: "6 4",
+                fillColor: "#dc3545",
+                fillOpacity: 0.15
+            }).addTo(drawingLayer);
+        } else {
+            previewPolygon = null;
+        }
+
+        updateDrawingControls();
+    }
+
+    function clearDrawing() {
+        drawing = false;
+        vertices = [];
+        previewPolygon = null;
+        drawingLayer.clearLayers();
+        map.getContainer().style.cursor = "";
+        updateDrawingControls();
+    }
+
+    startButton.on("click", function () {
+        if (drawing) return;
+
+        drawing = true;
+        map.getContainer().style.cursor = "crosshair";
+        updateDrawingControls();
+    });
+
+    map.on("click", function (event) {
+        if (!drawing) return;
+
+        vertices.push([
+            event.latlng.lat,
+            event.latlng.lng
+        ]);
+
+        renderDrawing();
+    });
+
+    undoButton.on("click", function () {
+        vertices.pop();
+        renderDrawing();
+    });
+
+    clearButton.on("click", clearDrawing);
+
+    saveButton.on("click", function () {
+        const name = $("#new-area-name").val().trim();
+        const zone = $("#new-area-zone").val();
+
+        if (!name || !zone) {
+            drawingStatus.text("Enter an area name and select a zone.");
+            return;
+        }
+
+        if (vertices.length < 3) {
+            drawingStatus.text("A polygon needs at least 3 vertices.");
+            return;
+        }
+
+        // Close the drawing mode before saving.
+        drawing = false;
+        map.getContainer().style.cursor = "";
+        updateDrawingControls();
+
+        const areaDto = {
+            name: name,
+            zone: zone,
+            coordinates: vertices.map(([latitude, longitude]) => ({
+                latitude,
+                longitude
+            }))
+        };
+        console.log(areaDto)
+        saveButton.prop("disabled", true).text("Saving...");
+
+        $.ajax({
+            url: "/rest/area",
+            method: "POST",
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(areaDto)
+        })
+            .done(function () {
+                clearDrawing();
+                $("#new-area-name").val("");
+                $("#new-area-zone").val("");
+                drawingStatus.text("Area created successfully.");
+
+                // Refresh the map from the server.
+                $.ajax({
+                    url: "/rest/area",
+                    method: "GET",
+                    dataType: "json"
+                })
+                    .done(drawAreas)
+                    .fail(function () {
+                        drawingStatus.text(
+                            "Area saved, but refreshing the map failed."
+                        );
+                    });
+            })
+            .fail(function (xhr) {
+                drawing = false;
+                drawingStatus.text(
+                    xhr.responseJSON?.message ||
+                    `Could not save area (HTTP ${xhr.status}).`
+                );
+            })
+            .always(function () {
+                saveButton.text("Save area");
+                updateDrawingControls();
+            });
+    });
+
+    updateDrawingControls();
 });

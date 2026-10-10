@@ -1,4 +1,4 @@
-package hr.algebra.parkalot.models.entity;
+package hr.algebra.parkalot.models;
 
 import lombok.Getter;
 

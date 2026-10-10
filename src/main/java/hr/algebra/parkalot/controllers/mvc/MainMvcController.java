@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/mvc/public")
+@RequestMapping("/mvc")
 public class MainMvcController {
     private static final String AREA_PAGE_NAME = "areas";
 

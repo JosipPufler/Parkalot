@@ -33,7 +33,7 @@ public class PermitController {
             return HttpUtils.produceUnauthorizedResponse("Unauthorized");
         }
 
-        if (byLicencePlate.isPresent() && byLicencePlate.get().getUser().getId().equals(currentUser.get().getId())) {
+        if (byLicencePlate.isPresent() && byLicencePlate.get().getOwner().getId().equals(currentUser.get().getId())) {
             return ResponseEntity.ok(byLicencePlate.get().getPermits().stream().map(PermitDto::new).toList());
         }
         return HttpUtils.produceNotFoundResponse("This vehicle is not registered to you.");
@@ -60,7 +60,7 @@ public class PermitController {
         }
 
         Optional<Vehicle> vehicle = vehicleService.findById(permitRequest.vehicleId());
-        if (vehicle.isEmpty() || !vehicle.get().getUser().getId().equals(currentUser.get().getId())) {
+        if (vehicle.isEmpty() || !vehicle.get().getOwner().getId().equals(currentUser.get().getId())) {
             return HttpUtils.produceNotFoundResponse("Vehicle is not registered to you.");
         }
 

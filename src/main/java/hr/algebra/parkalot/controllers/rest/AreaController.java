@@ -6,13 +6,13 @@ import hr.algebra.parkalot.models.dto.AreaDto;
 import hr.algebra.parkalot.models.dto.CoordinateDto;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.utils.HttpUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBWriter;
-import org.springframework.data.geo.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/rest/public/area")
+@RequestMapping("/rest/area")
 @RequiredArgsConstructor
 public class AreaController {
     private final AreaService areaService;
@@ -52,13 +52,15 @@ public class AreaController {
         );
     }
 
-    @PostMapping
-    public ResponseEntity<?> createArea(@RequestBody AreaDto areaDto){
-        Coordinate[] coordinates = areaDto.coordinates().stream()
+    @PostMapping()
+    public ResponseEntity<?> createArea(@Valid @RequestBody AreaDto areaDto){
+        List<Coordinate> coordinates = new ArrayList<>(areaDto.coordinates().stream()
                 .map(c -> new Coordinate(c.longitude(), c.latitude()))
-                .toArray(Coordinate[]::new);
+                .toList());
 
-        Polygon polygon = new GeometryFactory().createPolygon(coordinates);
+        coordinates.add(coordinates.getFirst());
+
+        Polygon polygon = new GeometryFactory().createPolygon(coordinates.toArray(new Coordinate[0]));
         byte[] polygonWkb = new WKBWriter().write(polygon);
 
         Area area = Area.builder()

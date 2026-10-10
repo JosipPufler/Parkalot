@@ -33,7 +33,7 @@ public class PermitArchiveController {
             return HttpUtils.produceUnauthorizedResponse("Unauthorized");
         }
 
-        if (vehicle.isPresent() && vehicle.get().getUser().getId().equals(currentUser.get().getId())) {
+        if (vehicle.isPresent() && vehicle.get().getOwner().getId().equals(currentUser.get().getId())) {
             return ResponseEntity.ok(permitArchiveService.findByLicencePlate(vehicle.get().getLicencePlate())
                     .stream().map(PermitArchiveDto::new).toList());
         }

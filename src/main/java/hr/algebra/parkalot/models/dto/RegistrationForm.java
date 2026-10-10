@@ -1,7 +1,7 @@
 package hr.algebra.parkalot.models.dto;
 
-public record RegistrationForm (String username, String password, String confirmPassword, String email, String firstName, String lastName){
+public record RegistrationForm (String firstName, String lastName, String password, String confirmPassword, String email){
     public RegistrationForm (){
-        this("", "", "", "", "", "");
+        this("", "", "", "", "");
     }
 }

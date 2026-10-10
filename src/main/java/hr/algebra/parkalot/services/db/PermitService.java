@@ -1,9 +1,8 @@
 package hr.algebra.parkalot.services.db;
 
+import hr.algebra.parkalot.models.PermitDuration;
 import hr.algebra.parkalot.models.Zone;
 import hr.algebra.parkalot.models.entity.Permit;
-import hr.algebra.parkalot.models.entity.PermitDuration;
-import hr.algebra.parkalot.models.entity.Vehicle;
 import hr.algebra.parkalot.repositories.PermitRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;

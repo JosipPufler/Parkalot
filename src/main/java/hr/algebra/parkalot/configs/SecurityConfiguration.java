@@ -33,7 +33,7 @@ public class SecurityConfiguration {
     private final LoginHandler loginHandler;
     private final LogoutHandler logoutHandler;
 
-    private static final String[] REST_PUBLIC_WHITELIST = { "/rest/auth/**", "/logout", "/mvc/public/**", "/rest/public/**", "/" };
+    private static final String[] REST_PUBLIC_WHITELIST = { "/rest/auth/**", "/logout", "/rest/public/**", "/" };
     private static final String[] MVC_PUBLIC_WHITELIST = { "/logout", "/mvc/public/**", "/" };
     private static final String[] MVC_ADMIN_LIST = { "/mvc/admin/**" };
     private static final String[] REST_ADMIN_LIST = { "/rest/admin/**" };
@@ -70,11 +70,11 @@ public class SecurityConfiguration {
             )
             .authorizeHttpRequests(auth ->
                     auth.requestMatchers(REST_PUBLIC_WHITELIST).permitAll()
-                            /*.requestMatchers(REST_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
+                            .requestMatchers(REST_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
                             .anyRequest().hasAnyRole(
                                     Role.ADMIN.getRoleName(),
                                     Role.USER.getRoleName()
-                            )*/
+                            )
             )
             .authenticationProvider(authenticationProvider(passwordEncoder))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
@@ -128,6 +128,7 @@ public class SecurityConfiguration {
                 .formLogin(httpSecurityFormLoginConfigurer -> httpSecurityFormLoginConfigurer
                         .loginPage("/mvc/public/auth/login")
                         .loginProcessingUrl("/login")
+                        .usernameParameter("email")
                         .successHandler(loginHandler)
                         .permitAll())
                 .logout(logout -> logout

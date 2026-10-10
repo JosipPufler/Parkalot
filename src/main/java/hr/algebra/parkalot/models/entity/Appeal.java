@@ -30,7 +30,9 @@ public class Appeal {
     private LocalDate deadline;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
     @ManyToOne(optional = false)
+    @JoinColumn(name = "violation_id", nullable = false)
     private Violation violation;
 }

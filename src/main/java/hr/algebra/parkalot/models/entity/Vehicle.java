@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "vehicles")
 @Getter
 @Setter
 @Builder
@@ -17,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Vehicle {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank
@@ -29,8 +30,10 @@ public class Vehicle {
     @Column(unique = true)
     private String licencePlate;
 
-    @OneToMany
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Permit> permits = new ArrayList<>();
+
     @ManyToOne(optional = false)
-    private User user;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User owner;
 }

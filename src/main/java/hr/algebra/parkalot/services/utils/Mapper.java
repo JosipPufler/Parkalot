@@ -1,5 +1,6 @@
 package hr.algebra.parkalot.services.utils;
 
+import hr.algebra.parkalot.configs.PasswordEncoderProvider;
 import hr.algebra.parkalot.models.Role;
 import hr.algebra.parkalot.models.dto.AppealDto;
 import hr.algebra.parkalot.models.dto.PermitRequestDto;
@@ -30,14 +31,14 @@ public final class Mapper {
                 .deadline(LocalDate.now().plusDays(7))
                 .description(appealDto.message())
                 .violation(violation)
-                .user(vehicle.getUser())
+                .user(vehicle.getOwner())
                 .build();
     }
 
     public static User mapRegistrationFormToUser(RegistrationForm registrationForm){
         return User.builder()
                 .email(registrationForm.email())
-                .password(registrationForm.password())
+                .password(PasswordEncoderProvider.getStaticPasswordEncoder().encode(registrationForm.password()))
                 .firstName(registrationForm.firstName())
                 .lastName(registrationForm.lastName())
                 .role(Role.USER)

@@ -1,5 +1,6 @@
 package hr.algebra.parkalot.models.entity;
 
+import hr.algebra.parkalot.models.PermitDuration;
 import hr.algebra.parkalot.models.Zone;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -30,6 +31,7 @@ public class Permit {
     private Zone zone;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
 
     public LocalDate getExpirationDate() {

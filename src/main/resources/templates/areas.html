@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout.html}"
       lang="en">
 
@@ -33,41 +34,114 @@
     <div class="map-wrapper">
         <div id="parking-map"></div>
 
-        <div class="card shadow map-panel">
-            <div class="card-body">
-                <h2 class="h6">Map controls</h2>
+        <div class="map-panel">
+            <div class="card shadow mb-3">
+                <div class="card-body">
+                    <h2 class="h6">Map controls</h2>
 
-                <input type="search"
-                       id="area-search"
-                       class="form-control mb-3"
-                       placeholder="Search parking areas...">
+                    <input type="search"
+                           id="area-search"
+                           class="form-control mb-3"
+                           placeholder="Search parking areas...">
 
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           id="show-areas"
-                           checked>
-                    <label class="form-check-label" for="show-areas">
-                        Show permit zones
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               id="show-areas"
+                               checked>
+                        <label class="form-check-label" for="show-areas">
+                            Show permit zones
+                        </label>
+                    </div>
+
+                    <hr>
+
+                    <div class="small">
+                <span class="d-inline-block rounded me-2"
+                      style="width: 12px; height: 12px;
+                             background: #0d6efd"></span>
+                        Permit zone
+                    </div>
+
+                    <div id="map-status"
+                         class="small text-muted mt-3"
+                         role="status">
+                        Loading map data...
+                    </div>
                 </div>
+            </div>
 
-                <hr>
+            <!-- Admin-only area creation -->
+            <div sec:authorize="hasRole('ADMIN')"
+                 class="card shadow">
+                <div class="card-body">
+                    <h2 class="h6">Create parking area</h2>
+                    <p class="small text-muted">
+                        Start drawing, then click the map to add polygon vertices.
+                    </p>
 
-                <div class="small">
-                    <span class="d-inline-block rounded me-2"
-                          style="width: 12px; height: 12px;
-                                 background: #0d6efd"></span>
-                    Permit zone
-                </div>
+                    <div class="mb-3">
+                        <label for="new-area-name" class="form-label">
+                            Area name
+                        </label>
+                        <input id="new-area-name"
+                               type="text"
+                               class="form-control"
+                               maxlength="100"
+                               required
+                               placeholder="e.g. City Centre">
+                    </div>
 
-                <div id="map-status"
-                     class="small text-muted mt-3"
-                     role="status">
-                    Loading map data...
+                    <div class="mb-3">
+                        <label for="new-area-zone" class="form-label">
+                            Permit zone
+                        </label>
+                        <select id="new-area-zone"
+                                class="form-select"
+                                required>
+                            <option value="" selected disabled>
+                                Select a zone
+                            </option>
+                            <option value="ZONE_1">ZONE I</option>
+                            <option value="ZONE_2">ZONE II</option>
+                            <option value="ZONE_3">ZONE III</option>
+                        </select>
+                    </div>
+
+                    <div class="small text-muted mb-3" id="drawing-status"
+                         role="status">
+                        No vertices selected.
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button"
+                                id="start-drawing"
+                                class="btn btn-outline-primary btn-sm">
+                            Start drawing
+                        </button>
+                        <button type="button"
+                                id="undo-vertex"
+                                class="btn btn-outline-secondary btn-sm"
+                                disabled>
+                            Undo vertex
+                        </button>
+                        <button type="button"
+                                id="clear-drawing"
+                                class="btn btn-outline-secondary btn-sm"
+                                disabled>
+                            Clear
+                        </button>
+                        <button type="button"
+                                id="save-area"
+                                class="btn btn-primary btn-sm"
+                                disabled>
+                            Save area
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 

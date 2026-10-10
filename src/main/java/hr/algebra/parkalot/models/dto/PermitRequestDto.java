@@ -1,7 +1,7 @@
 package hr.algebra.parkalot.models.dto;
 
+import hr.algebra.parkalot.models.PermitDuration;
 import hr.algebra.parkalot.models.Zone;
-import hr.algebra.parkalot.models.entity.PermitDuration;
 
 import java.time.LocalDate;
 

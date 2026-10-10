@@ -30,7 +30,7 @@ public class VehicleController {
     @GetMapping
     public ResponseEntity<List<VehicleDto>> getAllVehicles() {
         return authUtils.getCurrentUser().map(user ->
-                        ResponseEntity.ok(vehicleService.findByUser(user).stream().map(VehicleDto::new).toList()))
+                        ResponseEntity.ok(vehicleService.findByOwner(user).stream().map(VehicleDto::new).toList()))
                 .orElseGet(() -> ResponseEntity.status(401).build());
     }
 
@@ -40,7 +40,7 @@ public class VehicleController {
         if (currentUser.isPresent()) {
             Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(licencePlate);
             if (byLicencePlate.isPresent()
-                    && Objects.equals(byLicencePlate.get().getUser().getId(), currentUser.get().getId())) {
+                    && Objects.equals(byLicencePlate.get().getOwner().getId(), currentUser.get().getId())) {
                 return ResponseEntity.ok(new VehicleDetailsDto(byLicencePlate.get(),
                         permitArchiveService.findByLicencePlate(licencePlate).stream().map(PermitArchiveDto::new).toList()));
             }

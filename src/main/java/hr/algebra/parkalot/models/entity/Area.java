@@ -35,8 +35,8 @@ public class Area {
     @Enumerated(EnumType.STRING)
     private Zone zone;
 
-    @OneToMany
-    private List<Violation> violations;
+    @OneToMany(mappedBy = "resolvedArea", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ParkingCheckLog> parkingCheckLogs;
 
     public List<CoordinateDto> getCoordinates() throws ParseException {
         Geometry geometry = new WKBReader(new GeometryFactory()).read(areaPolygon);

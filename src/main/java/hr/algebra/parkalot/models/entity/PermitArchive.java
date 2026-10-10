@@ -20,7 +20,7 @@ public class PermitArchive {
         this.startDate = permit.getStartDate();
         this.endDate = permit.getExpirationDate();
         this.zone = permit.getZone();
-        this.user = permit.getVehicle().getUser();
+        this.user = permit.getVehicle().getOwner();
         this.username = this.user.getFirstName() + " " + this.user.getLastName();
         this.email = this.user.getEmail();
         this.licencePlate = permit.getVehicle().getLicencePlate();
@@ -48,5 +48,6 @@ public class PermitArchive {
     private Double price;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 }

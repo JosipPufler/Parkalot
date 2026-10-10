@@ -40,7 +40,7 @@ public class JwtService {
         Instant now = Instant.now();
         Date issuedAt = Date.from(now);
 
-        Date expiration = Date.from(now.plusSeconds(JWT_EXPIRATION_MS));
+        Date expiration = Date.from(now.plusMillis(JWT_EXPIRATION_MS));
 
         return Jwts.builder()
                 .claim("id", user.getId())
@@ -103,15 +103,15 @@ public class JwtService {
 
     public ResponseCookie generateAccessToken(User user) {
         String token = generateJwtToken(user);
+
         return ResponseCookie.from(ACCESS_TOKEN, token)
                 .httpOnly(true)
                 .sameSite("Strict")
-                .path("/rest")
-                .secure(true)
+                .path("/")
+                .secure(false)
                 .maxAge(Duration.ofMinutes(ACCESS_TOKEN_DURATION_MINUTES))
                 .build();
     }
-
     public String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
 

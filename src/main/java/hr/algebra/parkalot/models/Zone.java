@@ -2,6 +2,9 @@ package hr.algebra.parkalot.models;
 
 import lombok.Getter;
 
+import java.time.LocalDate;
+import java.util.function.UnaryOperator;
+
 @Getter
 public enum Zone {
     ZONE_1("Zone I", 15.),

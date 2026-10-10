@@ -8,6 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VehicleRepo extends JpaRepository<Vehicle, Long> {
-     List<Vehicle> findByUser(User user);
+     List<Vehicle> findByOwner(User user);
      Optional<Vehicle> findByLicencePlate(String plateNumber);
 }
