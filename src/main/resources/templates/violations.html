@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <title>My Violations</title>
+</head>
+<body>
+<div layout:fragment="content" class="container py-4">
+    <div th:replace="~{fragments/nav :: navbar}"></div>
+    <h2 class="mb-4">My Violations</h2>
+
+    <div id="violations-status" class="text-muted mb-3">
+        Loading violations...
+    </div>
+
+    <div id="violations-container"></div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script th:src="@{/js/violations.js}"></script>
+</th:block>
+</body>
+</html>

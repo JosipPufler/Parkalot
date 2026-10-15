@@ -8,19 +8,19 @@ import hr.algebra.parkalot.models.dto.VehicleDto;
 import hr.algebra.parkalot.services.utils.AuthUtils;
 import hr.algebra.parkalot.services.db.PermitArchiveService;
 import hr.algebra.parkalot.services.db.VehicleService;
+import hr.algebra.parkalot.services.utils.HttpUtils;
+import hr.algebra.parkalot.services.utils.Mapper;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.io.ParseException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/rest/vehicles")
+@RequestMapping("/rest/vehicle")
 @RequiredArgsConstructor
 public class VehicleController {
     private final VehicleService vehicleService;
@@ -35,7 +35,7 @@ public class VehicleController {
     }
 
     @GetMapping("/{licencePlate}")
-    public ResponseEntity<VehicleDetailsDto> getVehicle(@PathVariable String licencePlate) {
+    public ResponseEntity<VehicleDetailsDto> getVehicle(@PathVariable String licencePlate) throws ParseException {
         Optional<User> currentUser = authUtils.getCurrentUser();
         if (currentUser.isPresent()) {
             Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(licencePlate);
@@ -46,5 +46,16 @@ public class VehicleController {
             }
         }
         return ResponseEntity.status(401).build();
+    }
+
+    @PostMapping()
+    public ResponseEntity<?> createVehicle(@RequestBody VehicleDto vehicleDto) {
+        Optional<User> currentUser = authUtils.getCurrentUser();
+        if (currentUser.isEmpty()) {
+            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+        }
+
+        Vehicle vehicle = Mapper.mapVehicleDtoToVehicle(vehicleDto, currentUser.get());
+        return ResponseEntity.ok(new VehicleDto(vehicleService.save(vehicle)));
     }
 }

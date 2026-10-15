@@ -6,8 +6,8 @@ import org.locationtech.jts.io.ParseException;
 
 import java.util.List;
 
-public record AreaDto(String name, String zone, @Size(min = 3) List<CoordinateDto> coordinates) {
+public record AreaDto(Long id, String name, String zone, @Size(min = 3) List<CoordinateDto> coordinates) {
     public AreaDto(Area area) throws ParseException {
-        this(area.getName(), area.getZone().getName(), area.getCoordinates());
+        this(area.getId(), area.getName(), area.getZone().getName(), area.getCoordinates());
     }
 }

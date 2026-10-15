@@ -33,7 +33,7 @@ public class ViolationController {
 
         List<Violation> violations = vehicleService.findByOwner(currentUser.get()).stream()
                 .flatMap(vehicle -> violationService.findViolationsByLicencePlate(vehicle.getLicencePlate()).stream()).toList();
-        return ResponseEntity.ok(violations.stream().map(ViolationDto::new));
+        return ResponseEntity.ok(violations.stream().map(ViolationDto::new).toList());
     }
 
     @GetMapping("/vehicle")

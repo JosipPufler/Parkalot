@@ -1,5 +1,6 @@
 package hr.algebra.parkalot.services;
 
+import hr.algebra.parkalot.models.entity.Area;
 import hr.algebra.parkalot.models.entity.Permit;
 import hr.algebra.parkalot.models.entity.PermitArchive;
 import hr.algebra.parkalot.models.Zone;
@@ -19,9 +20,9 @@ public class ParkingService {
     private final PermitArchiveService permitArchiveService;
     private final AreaService areaService;
 
-    public Optional<Permit> checkParkingStatusIsValid(String licencePlateNumber, Zone currentZone) {
+    public Optional<Permit> checkParkingStatusIsValid(String licencePlateNumber, Area area) {
         return cullPermits(permitService.getPermitsByLicencePlate(licencePlateNumber))
-                .stream().filter(permit -> permit.getZone() == currentZone && permit.isActive()).findFirst();
+                .stream().filter(permit -> permit.getArea() == area && permit.isActive()).findFirst();
     }
 
     public void cullAllPermits(){

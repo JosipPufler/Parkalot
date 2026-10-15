@@ -26,13 +26,13 @@ public class Permit {
     private PermitDuration permitDuration;
     @NotNull
     private Double price;
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    private Zone zone;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "area_id", nullable = false)
+    private Area area;
 
     public LocalDate getExpirationDate() {
         return permitDuration.calculateEndDate.apply(startDate);
@@ -48,7 +48,7 @@ public class Permit {
     }
 
     public Boolean isActive() {
-        return LocalDate.now().isAfter(startDate) && !isExpired();
+        return (LocalDate.now().isAfter(startDate) || LocalDate.now().isEqual(startDate)) && !isExpired();
     }
 
     public boolean overlaps(LocalDate otherStart, LocalDate otherEnd) {

@@ -12,7 +12,7 @@ import java.util.List;
 public interface AreaRepo extends JpaRepository<Area, Long> {
     @Query(value = """
         SELECT * FROM areas g 
-        WHERE ST_Contains(g.areaPolygon, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326))
+        WHERE ST_Contains(g.area_polygon, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326))
         """, nativeQuery = true)
     List<Area> findAreasByCoordinates(@Param("lat") double lat, @Param("lng") double lng);
 }

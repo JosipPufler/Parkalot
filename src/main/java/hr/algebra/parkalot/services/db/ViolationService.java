@@ -1,8 +1,6 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.entity.Area;
 import hr.algebra.parkalot.models.entity.ParkingCheckLog;
-import hr.algebra.parkalot.models.entity.User;
 import hr.algebra.parkalot.models.entity.Violation;
 import hr.algebra.parkalot.repositories.ViolationRepo;
 import jakarta.transaction.Transactional;
@@ -13,19 +11,29 @@ import java.util.List;
 
 @Service
 public class ViolationService extends GeneralCrudService<Violation, ViolationRepo> {
+    private final ParkingCheckLogService parkingCheckLogService;
+
     public static final Double TICKET_PRICE = 8.99;
 
-    protected ViolationService(ViolationRepo repository) {
+    protected ViolationService(ViolationRepo repository, ParkingCheckLogService parkingCheckLogService) {
         super(repository);
+        this.parkingCheckLogService = parkingCheckLogService;
     }
 
     @Transactional
     public Violation issueViolation(ParkingCheckLog parkingCheckLog){
-        return save(Violation.builder()
+        Violation violation = save(Violation.builder()
+                .active(Boolean.TRUE)
+                .message("")
                 .timestamp(LocalDateTime.now())
                 .price(TICKET_PRICE)
                 .parkingCheckLog(parkingCheckLog)
                 .build());
+
+        parkingCheckLog.setViolation(violation);
+        parkingCheckLogService.save(parkingCheckLog);
+
+        return violation;
     }
 
     public List<Violation> findViolationsByLicencePlate(String licencePlate){

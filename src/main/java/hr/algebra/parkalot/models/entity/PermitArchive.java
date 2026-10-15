@@ -19,7 +19,8 @@ public class PermitArchive {
     public PermitArchive(Permit permit){
         this.startDate = permit.getStartDate();
         this.endDate = permit.getExpirationDate();
-        this.zone = permit.getZone();
+        this.areaName = permit.getArea().getName();
+        this.zone = permit.getArea().getZone();
         this.user = permit.getVehicle().getOwner();
         this.username = this.user.getFirstName() + " " + this.user.getLastName();
         this.email = this.user.getEmail();
@@ -31,6 +32,8 @@ public class PermitArchive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    private String areaName;
     @NotNull
     @Enumerated(EnumType.STRING)
     private Zone zone;

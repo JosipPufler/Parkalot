@@ -33,5 +33,4 @@ public class Violation {
 
     @OneToMany(mappedBy = "violation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appeal> appeals;
-
 }

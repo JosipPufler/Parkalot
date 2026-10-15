@@ -5,6 +5,7 @@ import hr.algebra.parkalot.models.Role;
 import hr.algebra.parkalot.models.dto.AppealDto;
 import hr.algebra.parkalot.models.dto.PermitRequestDto;
 import hr.algebra.parkalot.models.dto.RegistrationForm;
+import hr.algebra.parkalot.models.dto.VehicleDto;
 import hr.algebra.parkalot.models.entity.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -14,11 +15,11 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Mapper {
-    public static Permit mapPermitRequestToPermit(PermitRequestDto permitRequestDto, Vehicle vehicle){
+    public static Permit mapPermitRequestToPermit(PermitRequestDto permitRequestDto, Vehicle vehicle, Area area){
         return Permit.builder()
-                .zone(permitRequestDto.zone())
+                .area(area)
                 .permitDuration(permitRequestDto.permitDuration())
-                .price(permitRequestDto.zone().getPrice() * permitRequestDto.permitDuration().getMultiplier())
+                .price(area.getZone().getPrice() * permitRequestDto.permitDuration().getMultiplier())
                 .vehicle(vehicle)
                 .startDate(permitRequestDto.startDate())
                 .build();
@@ -42,6 +43,16 @@ public final class Mapper {
                 .firstName(registrationForm.firstName())
                 .lastName(registrationForm.lastName())
                 .role(Role.USER)
+                .build();
+    }
+
+    public static Vehicle mapVehicleDtoToVehicle(VehicleDto vehicleDto, User user){
+        return Vehicle.builder()
+                .make(vehicleDto.make())
+                .model(vehicleDto.model())
+                .year(vehicleDto.year())
+                .licencePlate(vehicleDto.licencePlate())
+                .owner(user)
                 .build();
     }
 }

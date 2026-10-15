@@ -2,6 +2,7 @@ package hr.algebra.parkalot.models.entity;
 
 import hr.algebra.parkalot.models.Zone;
 import hr.algebra.parkalot.models.dto.CoordinateDto;
+import hr.algebra.parkalot.models.dto.PermitDto;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +29,7 @@ public class Area {
     private Long id;
 
     @NotBlank
+    @Column(unique = true)
     private String name;
     @NotNull
     private byte[] areaPolygon;
@@ -37,6 +39,8 @@ public class Area {
 
     @OneToMany(mappedBy = "resolvedArea", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ParkingCheckLog> parkingCheckLogs;
+    @OneToMany(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Permit> permits;
 
     public List<CoordinateDto> getCoordinates() throws ParseException {
         Geometry geometry = new WKBReader(new GeometryFactory()).read(areaPolygon);
