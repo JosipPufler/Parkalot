@@ -2,6 +2,7 @@ package hr.algebra.parkalot.services;
 
 import hr.algebra.parkalot.exceptions.PayPalException;
 import hr.algebra.parkalot.models.dto.PermitRequestDto;
+import hr.algebra.parkalot.models.entity.Violation;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.db.PermitService;
 import hr.algebra.parkalot.services.db.VehicleService;
@@ -31,13 +32,17 @@ public class PayPalService {
     @Value("${paypal.secret}")
     private String secret;
 
-    public Optional<String> createOrder(PermitRequestDto permitRequestDto) {
-        String token = getAccessToken();
-
+    public Optional<String> createPermitOrder(PermitRequestDto permitRequestDto) {
         Optional<Double> price = areaService.calculateAreaPermitPrice(permitRequestDto.areaId(), permitRequestDto.permitDuration());
-        if (price.isEmpty()) {
-            return Optional.empty();
-        }
+        return price.map(this::createOrder);
+    }
+
+    public String createViolationPaymentOrder(Violation violation){
+        return createOrder(violation.getPrice());
+    }
+
+    private String createOrder(Double price) {
+        String token = getAccessToken();
 
         Map<String, Object> orderPayload = Map.of(
                 "intent", "CAPTURE",
@@ -45,7 +50,7 @@ public class PayPalService {
                         "amount", Map.of(
                                 "currency_code", "EUR",
                                 "value", String.format(Locale.US, "%.2f",
-                                        price.get())
+                                        price)
                         )
                 ))
         );
@@ -69,7 +74,7 @@ public class PayPalService {
         if (response.getBody() != null) {
             Map<String, Object> body = response.getBody();
             if (body != null && body.get("id") != null) {
-                return Optional.of((String) body.get("id"));
+                return (String) body.get("id");
             }
         }
         throw new PayPalException("Error getting order id");

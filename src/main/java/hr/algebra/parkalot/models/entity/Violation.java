@@ -30,6 +30,8 @@ public class Violation {
 
     @OneToOne(optional = false)
     private ParkingCheckLog parkingCheckLog;
+    @OneToOne()
+    private ViolationPayment violationPayment;
 
     @OneToMany(mappedBy = "violation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appeal> appeals;
