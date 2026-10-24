@@ -30,7 +30,7 @@ public class PermitArchiveController {
         Optional<User> currentUser = authUtils.getCurrentUser();
 
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         }
 
         if (vehicle.isPresent() && vehicle.get().getOwner().getId().equals(currentUser.get().getId())) {
@@ -45,7 +45,7 @@ public class PermitArchiveController {
         Optional<User> currentUser = authUtils.getCurrentUser();
 
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         }
 
         return ResponseEntity.ok(currentUser.get().getVehicles().stream()

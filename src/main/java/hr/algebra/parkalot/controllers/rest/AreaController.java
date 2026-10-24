@@ -47,9 +47,7 @@ public class AreaController {
             AreaDto areaDto = new AreaDto(area);
             list.add(areaDto);
         }
-        return ResponseEntity.ok(
-                list
-        );
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping()

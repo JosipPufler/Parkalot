@@ -1,5 +1,6 @@
 package hr.algebra.parkalot.services.db;
 
+import hr.algebra.parkalot.models.PermitDuration;
 import hr.algebra.parkalot.models.entity.Area;
 import hr.algebra.parkalot.repositories.AreaRepo;
 import lombok.extern.slf4j.Slf4j;
@@ -27,5 +28,9 @@ public class AreaService extends GeneralCrudService<Area, AreaRepo> {
         }
 
         return Optional.of(areasByCoordinates.getFirst());
+    }
+
+    public Optional<Double> calculateAreaPermitPrice(Long areaId, PermitDuration permitDuration) {
+        return repository.findById(areaId).map(value -> value.getZone().getPrice() * permitDuration.getMultiplier());
     }
 }

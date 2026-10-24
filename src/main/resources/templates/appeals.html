@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <title>My Permits</title>
+</head>
+<body>
+<div layout:fragment="content" class="container py-4">
+    <div th:replace="~{fragments/nav :: navbar}"></div>
+    <h2 class="mb-4">My Permits</h2>
+
+    <div id="appeals-status" class="text-muted mb-3">
+        Loading appeals...
+    </div>
+
+    <div id="appeals-container" th:attr="data-user-role=${userRole}"></div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script th:src="@{/js/appeals.js}"></script>
+</th:block>
+</body>
+</html>

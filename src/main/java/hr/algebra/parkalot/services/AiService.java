@@ -23,14 +23,6 @@ public class AiService {
         this.chatModel = chatModel;
     }
 
-    public String ask(String message) {
-        return chatModel.call(message);
-    }
-
-    public Flux<ChatResponse> stream(String message) {
-        return chatModel.stream(new Prompt(message));
-    }
-
     public String readLicencePlate(MultipartFile image) throws IOException {
         Media media = new Media(
                 MimeTypeUtils.parseMimeType(image.getContentType()),

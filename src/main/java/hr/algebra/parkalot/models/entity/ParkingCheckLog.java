@@ -34,7 +34,7 @@ public class ParkingCheckLog {
     @JoinColumn(name = "area_id", nullable = false)
     private Area resolvedArea;
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "officer_id", nullable = false)
     private User officer;
     @OneToOne()
     private Violation violation;

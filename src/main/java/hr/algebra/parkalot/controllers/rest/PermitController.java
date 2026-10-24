@@ -36,7 +36,7 @@ public class PermitController {
         Optional<User> currentUser = authUtils.getCurrentUser();
 
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         }
 
         if (byLicencePlate.isPresent() && byLicencePlate.get().getOwner().getId().equals(currentUser.get().getId())) {
@@ -55,7 +55,7 @@ public class PermitController {
         Optional<User> currentUser = authUtils.getCurrentUser();
 
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         }
 
         List<PermitDto> list = new ArrayList<>();
@@ -73,7 +73,7 @@ public class PermitController {
         Optional<User> currentUser = authUtils.getCurrentUser();
 
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         }
 
         Optional<Vehicle> vehicle = vehicleService.findById(permitRequest.vehicleId());

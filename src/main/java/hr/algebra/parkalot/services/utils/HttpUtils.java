@@ -8,27 +8,37 @@ import org.springframework.http.ResponseEntity;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class HttpUtils {
+    public static final String UNAUTHORIZED_DEFAULT_MESSAGE = "Unauthorized";
+
     public static ResponseEntity<ProblemDetail> produceErrorResponse(HttpStatus status, String message) {
         return ResponseEntity.status(status).body(ProblemDetail.forStatusAndDetail(status, message));
     }
 
     public static ResponseEntity<ProblemDetail> produceBadRequestResponse(String message) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message));
+        return produceErrorResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    public static ResponseEntity<ProblemDetail> produceUnauthorizedResponse() {
+        return produceUnauthorizedResponse(UNAUTHORIZED_DEFAULT_MESSAGE);
     }
 
     public static ResponseEntity<ProblemDetail> produceUnauthorizedResponse(String message) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, message));
+        return produceErrorResponse(HttpStatus.UNAUTHORIZED, message);
     }
 
     public static ResponseEntity<ProblemDetail> produceForbiddenResponse(String message) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message));
+        return produceErrorResponse(HttpStatus.FORBIDDEN, message);
     }
 
     public static ResponseEntity<ProblemDetail> produceNotFoundResponse(String message) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message));
+        return produceErrorResponse(HttpStatus.NOT_FOUND, message);
     }
 
     public static ResponseEntity<ProblemDetail> produceInternalErrorResponse(String message) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, message));
+        return produceErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, message);
+    }
+
+    public static ResponseEntity<Void> produceOkResponse() {
+        return ResponseEntity.ok().build();
     }
 }

@@ -19,8 +19,8 @@ $(document).ready(function () {
         }
     });
 
-    $(document).on("click", "[data-toggle='collapse']", function () {
-        const target = $(this).attr("data-target");
+    $(document).on("click", "[data-collapse-target]", function () {
+        const target = $(this).attr("data-collapse-target");
         $(target).collapse("toggle");
     });
 
@@ -37,7 +37,7 @@ $(document).ready(function () {
         const groups = {};
 
         permits.forEach(function (permit) {
-            const plate = permit.licencePlate || "Unknown vehicle";
+            const plate = permit.vehicle.licencePlate || "Unknown vehicle";
 
             if (!groups[plate]) {
                 groups[plate] = [];

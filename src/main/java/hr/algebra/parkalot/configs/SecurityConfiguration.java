@@ -73,6 +73,7 @@ public class SecurityConfiguration {
                             .requestMatchers(REST_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
                             .anyRequest().hasAnyRole(
                                     Role.ADMIN.getRoleName(),
+                                    Role.OFFICER.getRoleName(),
                                     Role.USER.getRoleName()
                             )
             )
@@ -122,7 +123,7 @@ public class SecurityConfiguration {
                                         "/favicon.ico"
                                 ).permitAll()
                                 .requestMatchers(MVC_ADMIN_LIST).hasRole(Role.ADMIN.getRoleName())
-                                .anyRequest().hasAnyRole(Role.ADMIN.getRoleName(), Role.USER.getRoleName())
+                                .anyRequest().hasAnyRole(Role.ADMIN.getRoleName(), Role.OFFICER.getRoleName(), Role.USER.getRoleName())
                 )
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(httpSecurityFormLoginConfigurer -> httpSecurityFormLoginConfigurer

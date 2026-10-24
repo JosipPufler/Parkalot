@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "appeals")
@@ -28,6 +29,10 @@ public class Appeal {
     private LocalDateTime createdAt;
     @NotNull
     private LocalDate deadline;
+    @NotNull
+    private Boolean resolved;
+    @NotNull
+    private Boolean rejected;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -35,4 +40,7 @@ public class Appeal {
     @ManyToOne(optional = false)
     @JoinColumn(name = "violation_id", nullable = false)
     private Violation violation;
+
+    @OneToMany(mappedBy = "appeal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AppealEvidence> evidence;
 }

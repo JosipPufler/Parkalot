@@ -28,7 +28,7 @@ public class VehicleController {
     private final AuthUtils authUtils;
 
     @GetMapping
-    public ResponseEntity<List<VehicleDto>> getAllVehicles() {
+    public ResponseEntity<?> getAllVehicles() {
         return authUtils.getCurrentUser().map(user ->
                         ResponseEntity.ok(vehicleService.findByOwner(user).stream().map(VehicleDto::new).toList()))
                 .orElseGet(() -> ResponseEntity.status(401).build());
@@ -52,7 +52,7 @@ public class VehicleController {
     public ResponseEntity<?> createVehicle(@RequestBody VehicleDto vehicleDto) {
         Optional<User> currentUser = authUtils.getCurrentUser();
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         }
 
         Vehicle vehicle = Mapper.mapVehicleDtoToVehicle(vehicleDto, currentUser.get());

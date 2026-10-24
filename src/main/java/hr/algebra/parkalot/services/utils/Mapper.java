@@ -2,7 +2,7 @@ package hr.algebra.parkalot.services.utils;
 
 import hr.algebra.parkalot.configs.PasswordEncoderProvider;
 import hr.algebra.parkalot.models.Role;
-import hr.algebra.parkalot.models.dto.AppealDto;
+import hr.algebra.parkalot.models.dto.AppealCreationDto;
 import hr.algebra.parkalot.models.dto.PermitRequestDto;
 import hr.algebra.parkalot.models.dto.RegistrationForm;
 import hr.algebra.parkalot.models.dto.VehicleDto;
@@ -25,14 +25,16 @@ public final class Mapper {
                 .build();
     }
 
-    public static Appeal mapAppealRequestToAppeal(AppealDto appealDto, Vehicle vehicle, Violation violation){
+    public static Appeal mapAppealRequestToAppeal(AppealCreationDto appealCreationDto, Vehicle vehicle, Violation violation){
         return Appeal.builder()
-                .title(appealDto.title())
+                .title(appealCreationDto.title())
                 .createdAt(LocalDateTime.now())
                 .deadline(LocalDate.now().plusDays(7))
-                .description(appealDto.message())
+                .description(appealCreationDto.message())
                 .violation(violation)
                 .user(vehicle.getOwner())
+                .resolved(Boolean.FALSE)
+                .rejected(Boolean.FALSE)
                 .build();
     }
 

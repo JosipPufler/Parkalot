@@ -19,9 +19,96 @@ $(document).ready(function () {
         }
     });
 
-    $(document).on("click", "[data-toggle='collapse']", function () {
-        const target = $(this).attr("data-target");
+    $(document).on("click", "[data-collapse-target]", function () {
+        const target = $(this).attr("data-collapse-target");
         $(target).collapse("toggle");
+    });
+
+    $(document).on("click", "[data-appeal-violation]", function () {
+        const violationId = $(this).attr("data-appeal-violation");
+
+        $("#appeal-form")[0].reset();
+        $("#appeal-violation-id").val(violationId);
+        $("#appeal-error").text("");
+        $("#appeal-modal").modal("show");
+    });
+
+    // Submit the appeal as multipart/form-data.
+    $("#appeal-form").on("submit", function (event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("violationId", $("#appeal-violation-id").val());
+        formData.append("title", $("#appeal-title").val().trim());
+        formData.append("message", $("#appeal-message").val().trim());
+
+        const files = $("#appeal-evidence")[0].files;
+
+        for (const file of files) {
+            formData.append("evidence", file);
+        }
+
+        const submitButton = $("#appeal-submit");
+        submitButton.prop("disabled", true).text("Submitting...");
+        $("#appeal-error").text("");
+
+        $.ajax({
+            url: "/rest/violations/appeal",
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $("#appeal-modal").modal("hide");
+                $("#appeal-form")[0].reset();
+
+                // Replace with your existing notification function if available.
+                status.removeClass("text-muted text-danger")
+                    .addClass("text-success")
+                    .text("Appeal submitted successfully.");
+            },
+            error: function (xhr) {
+                $("#appeal-error").text(
+                    xhr.responseJSON?.message ||
+                    "Failed to submit the appeal. Please try again."
+                );
+            },
+            complete: function () {
+                submitButton.prop("disabled", false)
+                    .text("Submit Appeal");
+            }
+        });
+    });
+
+    // Payment initiation: replace this URL with your actual payment endpoint.
+    $(document).on("click", "[data-pay-violation]", function () {
+        const violationId = $(this).attr("data-pay-violation");
+
+        if (!confirm("Proceed to payment for this violation?")) {
+            return;
+        }
+
+        // Example contract only; implement this endpoint on your backend.
+        $.ajax({
+            url: `/rest/payments/violations/${encodeURIComponent(violationId)}`,
+            method: "POST",
+            success: function (response) {
+                // If your payment provider returns a checkout URL:
+                if (response.checkoutUrl) {
+                    window.location.assign(response.checkoutUrl);
+                } else {
+                    status.removeClass("text-muted text-danger")
+                        .addClass("text-success")
+                        .text("Payment request initiated.");
+                }
+            },
+            error: function (xhr) {
+                alert(
+                    xhr.responseJSON?.message ||
+                    "Could not initiate payment. Please try again."
+                );
+            }
+        });
     });
 
     function renderViolations(violations) {
@@ -118,6 +205,26 @@ $(document).ready(function () {
         }
 
         body.append(heading, details);
+
+        const actions = $("<div>").addClass("mt-3 d-flex flex-wrap");
+
+        const payButton = $("<button>")
+            .attr("type", "button")
+            .addClass("btn btn-success btn-sm mr-2")
+            .text("Pay")
+            .attr("data-pay-violation", violation.id)
+            .prop("disabled", !active || violation.id == null);
+
+        const appealButton = $("<button>")
+            .attr("type", "button")
+            .addClass("btn btn-outline-primary btn-sm")
+            .text("Raise Appeal")
+            .attr("data-appeal-violation", violation.id)
+            .prop("disabled", !active || violation.id == null);
+
+        actions.append(payButton, appealButton);
+        body.append(actions);
+
         card.append(body);
 
         return card;

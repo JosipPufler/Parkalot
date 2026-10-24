@@ -17,6 +17,70 @@
     </div>
 
     <div id="violations-container"></div>
+
+    <div class="modal fade" id="appeal-modal" tabindex="-1"
+         role="dialog" aria-labelledby="appeal-modal-title"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form id="appeal-form" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="appeal-modal-title">
+                            Raise an Appeal
+                        </h5>
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" id="appeal-violation-id"
+                               name="violationId">
+
+                        <div class="form-group">
+                            <label for="appeal-title">Title</label>
+                            <input type="text" class="form-control"
+                                   id="appeal-title" name="title"
+                                   maxlength="150" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="appeal-message">Explanation</label>
+                            <textarea class="form-control"
+                                      id="appeal-message" name="message"
+                                      rows="5" maxlength="5000"
+                                      required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="appeal-evidence">
+                                Evidence (optional)
+                            </label>
+                            <input type="file" class="form-control-file"
+                                   id="appeal-evidence" name="evidence"
+                                   multiple accept="image/*,.pdf">
+                            <small class="form-text text-muted">
+                                You can attach multiple images or PDF files.
+                            </small>
+                        </div>
+
+                        <div id="appeal-error"
+                             class="text-danger small"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal">Cancel</button>
+                        <button type="submit" id="appeal-submit"
+                                class="btn btn-primary">
+                            Submit Appeal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <th:block layout:fragment="pageScripts">

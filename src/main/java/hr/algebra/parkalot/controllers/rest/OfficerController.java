@@ -36,7 +36,7 @@ public class OfficerController {
         LocalDateTime timestamp = LocalDateTime.now();
         Optional<User> currentUser = authUtils.getCurrentUser();
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         } else if (currentUser.get().getRole() != Role.OFFICER) {
             return HttpUtils.produceForbiddenResponse("You are not an officer");
         }
@@ -70,7 +70,7 @@ public class OfficerController {
         LocalDateTime timestamp = LocalDateTime.now();
         Optional<User> currentUser = authUtils.getCurrentUser();
         if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse("Unauthorized");
+            return HttpUtils.produceUnauthorizedResponse();
         // TODO CHANGE FROM ADMIN TO OFFICER
         } else if (currentUser.get().getRole() != Role.ADMIN) {
             return HttpUtils.produceForbiddenResponse("You are not an officer");
