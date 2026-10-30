@@ -2,10 +2,9 @@ package hr.algebra.parkalot.services;
 
 import hr.algebra.parkalot.exceptions.PayPalException;
 import hr.algebra.parkalot.models.dto.PermitRequestDto;
+import hr.algebra.parkalot.models.entity.Permit;
 import hr.algebra.parkalot.models.entity.Violation;
-import hr.algebra.parkalot.services.db.AreaService;
-import hr.algebra.parkalot.services.db.PermitService;
-import hr.algebra.parkalot.services.db.VehicleService;
+import hr.algebra.parkalot.services.db.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -13,18 +12,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class PayPalService {
-    private final VehicleService vehicleService;
     private final PermitService permitService;
     private final AreaService areaService;
+    private final ViolationService violationService;
 
     private final RestTemplate restTemplate = new RestTemplate();
     @Value("${paypal.clientId}")
@@ -127,5 +125,35 @@ public class PayPalService {
         }
 
         return response.getBody();
+    }
+
+    public Boolean verifyPaymentAmount(String orderId, Double amount) {
+        Optional<Violation> violationOpt = violationService.findByOrderId(orderId);
+        if (violationOpt.isPresent()) {
+            Violation violation = violationOpt.get();
+
+            if (Objects.equals(violation.getPrice(), amount)){
+                violation.setPaymentTime(LocalDateTime.now());
+                violationService.save(violation);
+                return true;
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Paid amount " + amount + " EUR does not match required " + violation.getPrice() + " EUR");
+        }
+
+        Optional<Permit> permitPaymentOpt = permitService.findByOrderId(orderId);
+        if (permitPaymentOpt.isPresent()) {
+            Permit permitPayment = permitPaymentOpt.get();
+
+            if (Objects.equals(permitPayment.getPrice(), amount)){
+                permitPayment.setPaymentTime(LocalDateTime.now());
+                permitService.save(permitPayment);
+                return true;
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Paid amount " + amount + " EUR does not match required " + permitPayment.getPrice() + " EUR");
+
+        }
+        return false;
     }
 }

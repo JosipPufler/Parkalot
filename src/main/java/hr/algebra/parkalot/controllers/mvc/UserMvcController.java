@@ -59,6 +59,6 @@ public class UserMvcController {
         }
 
         userService.save(Mapper.mapRegistrationFormToUser(registrationForm));
-        return "redirect:/auth/login?registered";
+        return "redirect:/mvc/public/auth/login?registered";
     }
 }

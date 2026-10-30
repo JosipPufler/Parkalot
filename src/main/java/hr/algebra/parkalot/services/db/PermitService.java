@@ -1,7 +1,6 @@
 package hr.algebra.parkalot.services.db;
 
 import hr.algebra.parkalot.models.PermitDuration;
-import hr.algebra.parkalot.models.Zone;
 import hr.algebra.parkalot.models.entity.Area;
 import hr.algebra.parkalot.models.entity.Permit;
 import hr.algebra.parkalot.repositories.PermitRepo;
@@ -32,5 +31,9 @@ public class PermitService extends GeneralCrudService<Permit, PermitRepo> {
     public Boolean permitsConflict(List<Permit> permits, Area area, LocalDate startDate, PermitDuration permitDuration) {
         return permits.stream().filter(x -> x.getArea() == area)
                 .anyMatch(permit -> permit.overlaps(startDate, permitDuration.calculateEndDate.apply(startDate)));
+    }
+
+    public Optional<Permit> findByOrderId(String orderId) {
+        return repository.findByPaypalId(orderId);
     }
 }

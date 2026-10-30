@@ -1,6 +1,7 @@
 package hr.algebra.parkalot.models.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -27,11 +28,12 @@ public class Violation {
     private Double price;
     @NotNull
     private Boolean active;
+    @NotBlank
+    private String orderId;
+    private LocalDateTime paymentTime;
 
     @OneToOne(optional = false)
     private ParkingCheckLog parkingCheckLog;
-    @OneToOne()
-    private ViolationPayment violationPayment;
 
     @OneToMany(mappedBy = "violation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appeal> appeals;

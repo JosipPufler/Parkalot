@@ -13,9 +13,9 @@ import hr.algebra.parkalot.services.utils.Mapper;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.io.ParseException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,34 +28,29 @@ public class VehicleController {
     private final AuthUtils authUtils;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> getAllVehicles() {
-        return authUtils.getCurrentUser().map(user ->
-                        ResponseEntity.ok(vehicleService.findByOwner(user).stream().map(VehicleDto::new).toList()))
-                .orElseGet(() -> ResponseEntity.status(401).build());
+        User currentUser = authUtils.requireCurrentUser();
+
+        return ResponseEntity.ok(vehicleService.findByOwner(currentUser).stream().map(VehicleDto::new).toList());
     }
 
     @GetMapping("/{licencePlate}")
-    public ResponseEntity<VehicleDetailsDto> getVehicle(@PathVariable String licencePlate) throws ParseException {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isPresent()) {
-            Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(licencePlate);
-            if (byLicencePlate.isPresent()
-                    && Objects.equals(byLicencePlate.get().getOwner().getId(), currentUser.get().getId())) {
-                return ResponseEntity.ok(new VehicleDetailsDto(byLicencePlate.get(),
-                        permitArchiveService.findByLicencePlate(licencePlate).stream().map(PermitArchiveDto::new).toList()));
-            }
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> getVehicle(@PathVariable String licencePlate) throws ParseException {
+        Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(licencePlate);
+        if (byLicencePlate.isPresent()
+                && Objects.equals(byLicencePlate.get().getOwner().getId(), authUtils.requireCurrentUser().getId())) {
+            return ResponseEntity.ok(new VehicleDetailsDto(byLicencePlate.get(),
+                    permitArchiveService.findByLicencePlate(licencePlate).stream().map(PermitArchiveDto::new).toList()));
         }
-        return ResponseEntity.status(401).build();
+        return HttpUtils.produceNotFoundResponse("Vehicle not found");
     }
 
     @PostMapping()
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> createVehicle(@RequestBody VehicleDto vehicleDto) {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
-
-        Vehicle vehicle = Mapper.mapVehicleDtoToVehicle(vehicleDto, currentUser.get());
+        Vehicle vehicle = Mapper.mapVehicleDtoToVehicle(vehicleDto, authUtils.requireCurrentUser());
         return ResponseEntity.ok(new VehicleDto(vehicleService.save(vehicle)));
     }
 }

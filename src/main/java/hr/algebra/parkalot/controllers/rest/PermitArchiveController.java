@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Optional;
 
 @RestController
@@ -27,13 +28,9 @@ public class PermitArchiveController {
     @GetMapping("/{licencePlate}")
     public ResponseEntity<?> getPastPermitsForVehicle(@PathVariable String licencePlate) {
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(licencePlate);
-        Optional<User> currentUser = authUtils.getCurrentUser();
+        User currentUser = authUtils.requireCurrentUser();
 
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
-
-        if (vehicle.isPresent() && vehicle.get().getOwner().getId().equals(currentUser.get().getId())) {
+        if (vehicle.isPresent() && vehicle.get().getOwner().getId().equals(currentUser.getId())) {
             return ResponseEntity.ok(permitArchiveService.findByLicencePlate(vehicle.get().getLicencePlate())
                     .stream().map(PermitArchiveDto::new).toList());
         }
@@ -42,13 +39,9 @@ public class PermitArchiveController {
 
     @GetMapping()
     public ResponseEntity<?> getPastPermits() {
-        Optional<User> currentUser = authUtils.getCurrentUser();
+        User currentUser = authUtils.requireCurrentUser();
 
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
-
-        return ResponseEntity.ok(currentUser.get().getVehicles().stream()
+        return ResponseEntity.ok(currentUser.getVehicles().stream()
                 .flatMap(x -> permitArchiveService.findByLicencePlate(x.getLicencePlate())
                         .stream().map(PermitArchiveDto::new)).toList());
     }

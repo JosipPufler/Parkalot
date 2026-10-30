@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.io.ParseException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,10 +35,8 @@ public class OfficerController {
     @PostMapping
     public ResponseEntity<?> checkVehicleStatus(@RequestBody PermitCheckRequestDto requestDto) throws ParseException {
         LocalDateTime timestamp = LocalDateTime.now();
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        } else if (currentUser.get().getRole() != Role.OFFICER) {
+        User currentUser = authUtils.requireCurrentUser();
+        if (currentUser.getRole() != Role.OFFICER) {
             return HttpUtils.produceForbiddenResponse("You are not an officer");
         }
 
@@ -52,7 +51,7 @@ public class OfficerController {
 
         Optional<Permit> permit = parkingService.checkParkingStatusIsValid(requestDto.licencePlate(), currentArea);
         ParkingCheckLog parkingLog = parkingCheckLogService.save(ParkingCheckLog.builder()
-                .officer(currentUser.get())
+                .officer(currentUser)
                 .latitude(requestDto.coordinates().latitude())
                 .longitude(requestDto.coordinates().longitude())
                 .timestamp(timestamp)
@@ -63,16 +62,15 @@ public class OfficerController {
         return generateParkingCheckResponse(timestamp, permit, parkingLog, requestDto);
     }
 
+    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
     @PostMapping(value = "/scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> checkVehicleStatus(@RequestParam("image") MultipartFile image,
                                                 @RequestParam("latitude") double latitude,
                                                 @RequestParam("longitude") double longitude) throws ParseException, IOException {
         LocalDateTime timestamp = LocalDateTime.now();
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
+        User currentUser = authUtils.requireCurrentUser();
         // TODO CHANGE FROM ADMIN TO OFFICER
-        } else if (currentUser.get().getRole() != Role.ADMIN) {
+        if (currentUser.getRole() != Role.ADMIN) {
             return HttpUtils.produceForbiddenResponse("You are not an officer");
         }
 
@@ -89,7 +87,7 @@ public class OfficerController {
 
         Optional<Permit> permit = parkingService.checkParkingStatusIsValid(licencePlate, currentArea);
         ParkingCheckLog parkingLog = parkingCheckLogService.save(ParkingCheckLog.builder()
-                .officer(currentUser.get())
+                .officer(currentUser)
                 .latitude(latitude)
                 .longitude(longitude)
                 .timestamp(timestamp)

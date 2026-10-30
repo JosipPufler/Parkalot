@@ -19,7 +19,6 @@ public final class Mapper {
         return Permit.builder()
                 .area(area)
                 .permitDuration(permitRequestDto.permitDuration())
-                .price(area.getZone().getPrice() * permitRequestDto.permitDuration().getMultiplier())
                 .vehicle(vehicle)
                 .startDate(permitRequestDto.startDate())
                 .build();

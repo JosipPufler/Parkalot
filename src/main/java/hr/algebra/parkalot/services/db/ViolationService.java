@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ViolationService extends GeneralCrudService<Violation, ViolationRepo> {
@@ -38,5 +39,9 @@ public class ViolationService extends GeneralCrudService<Violation, ViolationRep
 
     public List<Violation> findViolationsByLicencePlate(String licencePlate){
         return repository.findByParkingCheckLogLicencePlate(licencePlate);
+    }
+
+    public Optional<Violation> findByOrderId(String orderId){
+        return repository.findByOrderId(orderId);
     }
 }

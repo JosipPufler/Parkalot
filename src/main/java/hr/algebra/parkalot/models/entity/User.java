@@ -44,12 +44,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PermitArchive> permitArchives;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PermitPayment> permitPayments;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ViolationPayment> violationPayments;
-
     public String getName(){
         return lastName == null ? firstName : firstName + " " + lastName;
     }

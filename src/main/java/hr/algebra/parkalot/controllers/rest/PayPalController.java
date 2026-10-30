@@ -1,67 +1,43 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.Role;
-import hr.algebra.parkalot.models.dto.PermitRequestDto;
-import hr.algebra.parkalot.models.entity.User;
 import hr.algebra.parkalot.services.PayPalService;
 import hr.algebra.parkalot.services.utils.AuthUtils;
-import jakarta.servlet.http.HttpSession;
+import hr.algebra.parkalot.services.utils.HttpUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/rest/purchase")
+@RequestMapping("/rest/payment")
 @RequiredArgsConstructor
 public class PayPalController {
     private final PayPalService payPalService;
     private final AuthUtils authUtils;
 
-    @PostMapping("/create-order")
-    public ResponseEntity<?> createOrder(@RequestBody PermitRequestDto permitRequestDto) {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty() || currentUser.get().getRole() != Role.USER) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
-        // Build the PayPal order
-        Optional<String> orderId = payPalService.createOrder(permitRequestDto);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("orderId", orderId);
-        return ResponseEntity.ok(response);
-    }
-
-
-    @PostMapping("/verify-order")
-    public ResponseEntity<Void> verifyOrder(@RequestBody Map<String, String> body, HttpSession session) {
+    @PostMapping("/permit/verify-order")
+    public ResponseEntity<?> verifyOrder(@RequestBody Map<String, String> body) {
         String orderId = body.get("orderId");
-        String address = body.get("address");
         if (orderId == null || orderId.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing orderId");
+            return HttpUtils.produceBadRequestResponse("Missing orderId");
         }
 
         Map<String, Object> captureResponse;
         try {
             captureResponse = payPalService.captureOrder(orderId);
         } catch (RuntimeException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed to capture PayPal order: " + ex.getMessage());
+            return HttpUtils.produceInternalErrorResponse("Failed to capture PayPal order: " + ex.getMessage());
         }
 
-        List<Map<String, Object>> purchaseUnits =
-                (List<Map<String, Object>>) captureResponse.get("purchase_units");
+        List<Map<String, Object>> purchaseUnits = (List<Map<String, Object>>) captureResponse.get("purchase_units");
 
         Map<String, String> amount = getValueMap(purchaseUnits);
 
@@ -72,6 +48,10 @@ public class PayPalController {
                     "Invalid PayPal capture response: incomplete amount");
         }
 
+        if (!currency.equals("EUR")) {
+            return HttpUtils.produceBadRequestResponse("Payment must be in EUR");
+        }
+
         Double paidValue;
         try {
             paidValue = Double.parseDouble(paidValueStr);
@@ -80,30 +60,8 @@ public class PayPalController {
                     "Invalid PayPal capture amount: " + paidValueStr);
         }
 
-        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-        Long userId = user.getId();
-        Optional<ShoppingCart> byUserId = shoppingService.findByUserId(userId);
-        if (byUserId.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        payPalService.verifyPaymentAmount(orderId, paidValue);
 
-        ShoppingCart shoppingCart = byUserId.get();
-        Double cartTotal = shoppingCart.getTotalPrice();
-        if (cartTotal.compareTo(paidValue) != 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Paid amount " + paidValue + " " + currency +
-                            " does not match cart total " + cartTotal + " EUR");
-        }
-        Optional<User> byId = userService.findById(userId);
-        if (byId.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        ShoppingCartRecord shoppingCartRecord = shoppingService.confirmOrder(shoppingCart, byId.get(), address, PaymentMethodEnum.PAYPAL, orderId);
-
-        session.setAttribute("purchase", new PurchaseDto(shoppingCartRecord));
         return ResponseEntity.status(HttpStatus.FOUND)
                 .header("Location", "/mvc/history/confirmation")
                 .build();

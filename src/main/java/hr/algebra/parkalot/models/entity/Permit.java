@@ -3,10 +3,12 @@ package hr.algebra.parkalot.models.entity;
 import hr.algebra.parkalot.models.PermitDuration;
 import hr.algebra.parkalot.models.Zone;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "permits")
@@ -26,6 +28,11 @@ public class Permit {
     private PermitDuration permitDuration;
     @NotNull
     private Double price;
+    @NotNull
+    LocalDateTime createdAt;
+    LocalDateTime paymentTime;
+    @NotBlank
+    String paypalId;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "vehicle_id", nullable = false)
@@ -48,7 +55,7 @@ public class Permit {
     }
 
     public Boolean isActive() {
-        return (LocalDate.now().isAfter(startDate) || LocalDate.now().isEqual(startDate)) && !isExpired();
+        return (LocalDate.now().isAfter(startDate) || LocalDate.now().isEqual(startDate)) && !isExpired() && paymentTime != null;
     }
 
     public boolean overlaps(LocalDate otherStart, LocalDate otherEnd) {

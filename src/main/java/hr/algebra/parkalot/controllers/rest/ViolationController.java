@@ -6,6 +6,7 @@ import hr.algebra.parkalot.models.dto.AppealCreationDto;
 import hr.algebra.parkalot.models.dto.AppealEvidenceDto;
 import hr.algebra.parkalot.models.entity.*;
 import hr.algebra.parkalot.models.dto.ViolationDto;
+import hr.algebra.parkalot.services.PayPalService;
 import hr.algebra.parkalot.services.db.AppealEvidenceService;
 import hr.algebra.parkalot.services.db.AppealService;
 import hr.algebra.parkalot.services.utils.AuthUtils;
@@ -18,6 +19,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -31,6 +33,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ViolationController {
     private final AuthUtils authUtils;
+    private final PayPalService payPalService;
     private final ViolationService violationService;
     private final VehicleService vehicleService;
     private final AppealService appealService;
@@ -38,31 +41,39 @@ public class ViolationController {
 
     @GetMapping
     public ResponseEntity<?> getViolations() {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
+        User currentUser = authUtils.requireCurrentUser();
 
-        List<Violation> violations = vehicleService.findByOwner(currentUser.get()).stream()
+        List<Violation> violations = vehicleService.findByOwner(currentUser).stream()
                 .flatMap(vehicle -> violationService.findViolationsByLicencePlate(vehicle.getLicencePlate()).stream()).toList();
         return ResponseEntity.ok(violations.stream().map(ViolationDto::new).toList());
     }
 
     @GetMapping("/vehicle")
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getVehicleViolations(@RequestParam String licensePlate) {
         return ResponseEntity.ok(violationService.findViolationsByLicencePlate(licensePlate).stream().map(ViolationDto::new));
     }
 
     @PostMapping()
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> resolveViolation(@RequestParam Long violationId){
+        User currentUser = authUtils.requireCurrentUser();
+
         Optional<Violation> byId = violationService.findById(violationId);
         if (byId.isEmpty()) {
             return HttpUtils.produceNotFoundResponse("Violation not found");
         }
 
+        Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(byId.get().getParkingCheckLog().getLicencePlate());
+
+        if (vehicle.isEmpty() || !Objects.equals(vehicle.get().getOwner().getId(), currentUser.getId())) {
+            return HttpUtils.produceNotFoundResponse("Vehicle not found");
+        }
+
         Violation violation = byId.get();
         if (violation.getActive()) {
-            violation.setActive(false);
+            String violationPaymentOrder = payPalService.createViolationPaymentOrder(violation);
+            violation.setOrderId(violationPaymentOrder);
             violationService.save(violation);
             return ResponseEntity.ok().build();
         }
@@ -70,18 +81,16 @@ public class ViolationController {
     }
 
     @PostMapping(path = "/appeal", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('USER')")
     public ResponseEntity<?> raiseViolationAppeal(@ModelAttribute AppealCreationDto appealCreationDto) throws IOException {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
+        User currentUser = authUtils.requireCurrentUser();
 
         Optional<Violation> violation = violationService.findById(appealCreationDto.violationId());
         if (violation.isEmpty()) {
             return HttpUtils.produceNotFoundResponse("Violation not found");
         }
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(violation.get().getParkingCheckLog().getLicencePlate());
-        if (vehicle.isEmpty() || !Objects.equals(vehicle.get().getOwner().getId(), currentUser.get().getId())) {
+        if (vehicle.isEmpty() || !Objects.equals(vehicle.get().getOwner().getId(), currentUser.getId())) {
             return HttpUtils.produceNotFoundResponse("Vehicle not found");
         }
 
@@ -96,25 +105,19 @@ public class ViolationController {
     }
 
     @GetMapping(path = "/appeal")
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getAppeals() {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty()) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
+        User currentUser = authUtils.requireCurrentUser();
 
-        if (currentUser.get().getRole() != Role.USER)
-            return ResponseEntity.ok(appealService.findByOfficerId(currentUser.get().getId()).stream().map(AppealDto::new).toList());
+        if (currentUser.getRole() != Role.USER)
+            return ResponseEntity.ok(appealService.findByOfficerId(currentUser.getId()).stream().map(AppealDto::new).toList());
 
-        return ResponseEntity.ok(appealService.findByUserId(currentUser.get().getId()).stream().map(AppealDto::new).toList());
+        return ResponseEntity.ok(appealService.findByUserId(currentUser.getId()).stream().map(AppealDto::new).toList());
     }
 
     @PutMapping(path = "/appeal/resolve/{appealId}")
+    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
     public ResponseEntity<?> resolveAppeal(@PathVariable Long appealId) {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty() || currentUser.get().getRole() == Role.USER) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
-
         Optional<Appeal> appeal = appealService.findById(appealId);
         if (appeal.isEmpty()) {
             return HttpUtils.produceNotFoundResponse("Appeal not found");
@@ -125,12 +128,8 @@ public class ViolationController {
     }
 
     @PutMapping(path = "/appeal/reject/{appealId}")
+    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
     public ResponseEntity<?> rejectAppeal(@PathVariable Long appealId) {
-        Optional<User> currentUser = authUtils.getCurrentUser();
-        if (currentUser.isEmpty() || currentUser.get().getRole() == Role.USER) {
-            return HttpUtils.produceUnauthorizedResponse();
-        }
-
         Optional<Appeal> appeal = appealService.findById(appealId);
         if (appeal.isEmpty()) {
             return HttpUtils.produceNotFoundResponse("Appeal not found");
@@ -141,13 +140,14 @@ public class ViolationController {
     }
 
     @GetMapping(path = "/appeal/{evidenceId}")
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getAppealEvidence(@PathVariable Long evidenceId) {
-        Optional<User> currentUser = authUtils.getCurrentUser();
+        User currentUser = authUtils.requireCurrentUser();
         Optional<AppealEvidence> evidence = appealEvidenceService.findById(evidenceId);
 
-        if (currentUser.isPresent() && evidence.isPresent() &&
-                (Objects.equals(evidence.get().getAppeal().getUser().getId(), currentUser.get().getId())
-                    || currentUser.get().getRole() == Role.OFFICER || currentUser.get().getRole() == Role.ADMIN
+        if (evidence.isPresent() &&
+                (Objects.equals(evidence.get().getAppeal().getUser().getId(), currentUser.getId())
+                    || currentUser.getRole() == Role.OFFICER || currentUser.getRole() == Role.ADMIN
                 )) {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(evidence.get().getMediaType()))

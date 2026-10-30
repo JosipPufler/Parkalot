@@ -14,6 +14,7 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBWriter;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class AreaController {
     private final AreaService areaService;
 
     @GetMapping("/whereami")
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getAreaForCoordinates(@RequestBody CoordinateDto coordinateDto){
         Optional<Area> currentArea = areaService.getCurrentArea(coordinateDto.latitude(), coordinateDto.longitude());
         if(currentArea.isEmpty()){
@@ -41,6 +43,7 @@ public class AreaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getAllAreas() throws ParseException {
         List<AreaDto> list = new ArrayList<>();
         for (Area area : areaService.findAll()) {
@@ -51,6 +54,7 @@ public class AreaController {
     }
 
     @PostMapping()
+    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
     public ResponseEntity<?> createArea(@Valid @RequestBody AreaDto areaDto){
         List<Coordinate> coordinates = new ArrayList<>(areaDto.coordinates().stream()
                 .map(c -> new Coordinate(c.longitude(), c.latitude()))
