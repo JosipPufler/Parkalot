@@ -33,7 +33,10 @@ public class Vehicle {
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Permit> permits = new ArrayList<>();
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User owner;
+    @ManyToMany(mappedBy = "vehicles")
+    private List<User> owners;
+
+    public Boolean isOwnedBy(User user) {
+        return owners.stream().anyMatch(owner -> owner.getId().equals(user.getId()));
+    }
 }

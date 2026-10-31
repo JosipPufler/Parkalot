@@ -66,7 +66,7 @@ public class ViolationController {
 
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(byId.get().getParkingCheckLog().getLicencePlate());
 
-        if (vehicle.isEmpty() || !Objects.equals(vehicle.get().getOwner().getId(), currentUser.getId())) {
+        if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(currentUser)) {
             return HttpUtils.produceNotFoundResponse("Vehicle not found");
         }
 
@@ -80,6 +80,16 @@ public class ViolationController {
         return HttpUtils.produceBadRequestResponse("Violation already resolved");
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deleteViolation(@PathVariable Long id){
+        if(!violationService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No violation for the given id: " + id);
+        }
+        violationService.deleteById(id);
+        return HttpUtils.produceOkResponse();
+    }
+
     @PostMapping(path = "/appeal", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('USER')")
     public ResponseEntity<?> raiseViolationAppeal(@ModelAttribute AppealCreationDto appealCreationDto) throws IOException {
@@ -90,11 +100,11 @@ public class ViolationController {
             return HttpUtils.produceNotFoundResponse("Violation not found");
         }
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(violation.get().getParkingCheckLog().getLicencePlate());
-        if (vehicle.isEmpty() || !Objects.equals(vehicle.get().getOwner().getId(), currentUser.getId())) {
+        if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(currentUser)) {
             return HttpUtils.produceNotFoundResponse("Vehicle not found");
         }
 
-        Appeal appeal = appealService.save(Mapper.mapAppealRequestToAppeal(appealCreationDto, vehicle.get(), violation.get()));
+        Appeal appeal = appealService.save(Mapper.mapAppealRequestToAppeal(appealCreationDto, violation.get(), currentUser));
         AppealDto appealDto;
         if (!appealCreationDto.evidence().isEmpty())
             appealDto = new AppealDto(appeal,
@@ -158,5 +168,25 @@ public class ViolationController {
                     .body(evidence.get().getEvidence());
         }
         return HttpUtils.produceUnauthorizedResponse();
+    }
+
+    @DeleteMapping("/appeal/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deleteAppeal(@PathVariable Long id){
+        if(!appealService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No appeal for the given id: " + id);
+        }
+        appealService.deleteById(id);
+        return HttpUtils.produceOkResponse();
+    }
+
+    @DeleteMapping("/appeal/evidence/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deleteAppealEvidence(@PathVariable Long id){
+        if(!appealEvidenceService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No appeal evidence for the given id: " + id);
+        }
+        appealEvidenceService.deleteById(id);
+        return HttpUtils.produceOkResponse();
     }
 }

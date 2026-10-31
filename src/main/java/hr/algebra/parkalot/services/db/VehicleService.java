@@ -15,7 +15,7 @@ public class VehicleService extends GeneralCrudService<Vehicle, VehicleRepo> {
     }
 
     public List<Vehicle> findByOwner(User user) {
-        return repository.findByOwner(user);
+        return repository.findByOwnersContaining(user);
     }
 
     public Optional<Vehicle> findByLicencePlate(String licencePlate) {

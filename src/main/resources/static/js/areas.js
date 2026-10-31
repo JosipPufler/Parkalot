@@ -740,4 +740,97 @@ $(function () {
 
     loadVehicles();
     updateDrawingControls();
+
+    // PayPal
+
+    document.getElementById('confirm-permit')
+        .addEventListener('click', async function () {
+
+            const permitRequest = {
+                vehicleId: selectedVehicle.id,
+                areaId: selectedArea.id,
+                startDate: document.getElementById('permit-start-date').value,
+                permitDuration: document.getElementById('permit-duration').value
+            };
+
+            const response = await fetch('/rest/permits', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(permitRequest)
+            });
+
+            if (!response.ok) {
+                // Handle error
+                return;
+            }
+
+            const result = await response.json();
+
+            paypalOrderId = result.orderId;
+
+            // Hide permit details
+            // Show PayPal checkout
+        });
+
+    paypal.Buttons({
+
+        createOrder: async function () {
+
+            const response = await fetch(
+                '/rest/payment/permit/create-order',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pendingPermitRequest)
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Could not create payment order');
+            }
+
+            const result = await response.json();
+
+            return result.orderId;
+        },
+
+        onApprove: async function (data) {
+
+            const response = await fetch(
+                '/rest/payment/permit/verify-order',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        orderId: data.orderID
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Payment verification failed');
+            }
+
+            window.location.href = '/mvc/history/confirmation';
+        },
+
+        onCancel: function () {
+            document.getElementById('permit-message').textContent =
+                'Payment cancelled.';
+        },
+
+        onError: function (error) {
+            console.error(error);
+
+            document.getElementById('permit-message').textContent =
+                'An error occurred during payment.';
+        }
+
+    }).render('#paypal-button-container');
 });

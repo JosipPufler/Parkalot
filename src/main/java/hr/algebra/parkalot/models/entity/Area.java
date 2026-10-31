@@ -2,7 +2,6 @@ package hr.algebra.parkalot.models.entity;
 
 import hr.algebra.parkalot.models.Zone;
 import hr.algebra.parkalot.models.dto.CoordinateDto;
-import hr.algebra.parkalot.models.dto.PermitDto;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +10,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
-import org.springframework.data.geo.Polygon;
 
 import java.util.Arrays;
 import java.util.List;

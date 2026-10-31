@@ -38,10 +38,10 @@ public class VehicleController {
     @GetMapping("/{licencePlate}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> getVehicle(@PathVariable String licencePlate) throws ParseException {
-        Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(licencePlate);
-        if (byLicencePlate.isPresent()
-                && Objects.equals(byLicencePlate.get().getOwner().getId(), authUtils.requireCurrentUser().getId())) {
-            return ResponseEntity.ok(new VehicleDetailsDto(byLicencePlate.get(),
+        Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(licencePlate);
+        if (vehicle.isPresent()
+                && vehicle.get().isOwnedBy(authUtils.requireCurrentUser())) {
+            return ResponseEntity.ok(new VehicleDetailsDto(vehicle.get(),
                     permitArchiveService.findByLicencePlate(licencePlate).stream().map(PermitArchiveDto::new).toList()));
         }
         return HttpUtils.produceNotFoundResponse("Vehicle not found");
@@ -52,5 +52,15 @@ public class VehicleController {
     public ResponseEntity<?> createVehicle(@RequestBody VehicleDto vehicleDto) {
         Vehicle vehicle = Mapper.mapVehicleDtoToVehicle(vehicleDto, authUtils.requireCurrentUser());
         return ResponseEntity.ok(new VehicleDto(vehicleService.save(vehicle)));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deleteVehicle(@PathVariable Long id){
+        if(!vehicleService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No vehicle for the given id: " + id);
+        }
+        vehicleService.deleteById(id);
+        return HttpUtils.produceOkResponse();
     }
 }

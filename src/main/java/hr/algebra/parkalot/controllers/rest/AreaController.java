@@ -54,7 +54,7 @@ public class AreaController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> createArea(@Valid @RequestBody AreaDto areaDto){
         List<Coordinate> coordinates = new ArrayList<>(areaDto.coordinates().stream()
                 .map(c -> new Coordinate(c.longitude(), c.latitude()))
@@ -71,5 +71,15 @@ public class AreaController {
                 .name(areaDto.name())
                 .build();
         return ResponseEntity.ok(areaService.save(area));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deleteArea(@PathVariable Long id){
+        if(!areaService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No area for the given id: " + id);
+        }
+        areaService.deleteById(id);
+        return HttpUtils.produceOkResponse();
     }
 }

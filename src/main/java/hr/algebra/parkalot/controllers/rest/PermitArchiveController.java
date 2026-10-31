@@ -9,12 +9,11 @@ import hr.algebra.parkalot.services.utils.AuthUtils;
 import hr.algebra.parkalot.services.utils.HttpUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
+import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -30,7 +29,7 @@ public class PermitArchiveController {
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(licencePlate);
         User currentUser = authUtils.requireCurrentUser();
 
-        if (vehicle.isPresent() && vehicle.get().getOwner().getId().equals(currentUser.getId())) {
+        if (vehicle.isPresent() && vehicle.get().isOwnedBy(currentUser)) {
             return ResponseEntity.ok(permitArchiveService.findByLicencePlate(vehicle.get().getLicencePlate())
                     .stream().map(PermitArchiveDto::new).toList());
         }
@@ -44,5 +43,15 @@ public class PermitArchiveController {
         return ResponseEntity.ok(currentUser.getVehicles().stream()
                 .flatMap(x -> permitArchiveService.findByLicencePlate(x.getLicencePlate())
                         .stream().map(PermitArchiveDto::new)).toList());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deletePermitArchive(@PathVariable Long id){
+        if(!permitArchiveService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No past permit for the given id: " + id);
+        }
+        permitArchiveService.deleteById(id);
+        return HttpUtils.produceOkResponse();
     }
 }

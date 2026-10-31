@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Mapper {
@@ -24,14 +25,14 @@ public final class Mapper {
                 .build();
     }
 
-    public static Appeal mapAppealRequestToAppeal(AppealCreationDto appealCreationDto, Vehicle vehicle, Violation violation){
+    public static Appeal mapAppealRequestToAppeal(AppealCreationDto appealCreationDto, Violation violation, User user){
         return Appeal.builder()
                 .title(appealCreationDto.title())
                 .createdAt(LocalDateTime.now())
                 .deadline(LocalDate.now().plusDays(7))
                 .description(appealCreationDto.message())
                 .violation(violation)
-                .user(vehicle.getOwner())
+                .user(user)
                 .resolved(Boolean.FALSE)
                 .rejected(Boolean.FALSE)
                 .build();
@@ -53,7 +54,7 @@ public final class Mapper {
                 .model(vehicleDto.model())
                 .year(vehicleDto.year())
                 .licencePlate(vehicleDto.licencePlate())
-                .owner(user)
+                .owners(List.of(user))
                 .build();
     }
 }

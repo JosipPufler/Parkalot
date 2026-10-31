@@ -38,6 +38,9 @@ public class Permit {
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
     @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User buyer;
+    @ManyToOne(optional = false)
     @JoinColumn(name = "area_id", nullable = false)
     private Area area;
 

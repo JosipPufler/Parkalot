@@ -36,13 +36,14 @@ public class PermitController {
     @GetMapping("/{licencePlate}")
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getPermitsForVehicle(@PathVariable String licencePlate) throws ParseException {
-        Optional<Vehicle> byLicencePlate = vehicleService.findByLicencePlate(licencePlate);
+        Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(licencePlate);
         User currentUser = authUtils.requireCurrentUser();
 
-        if (byLicencePlate.isPresent() && (byLicencePlate.get().getOwner().getId().equals(currentUser.getId())
-            || currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.OFFICER)) {
+        if (vehicle.isPresent()
+                && (vehicle.get().isOwnedBy(currentUser)
+                    || currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.OFFICER)) {
             List<PermitDto> list = new ArrayList<>();
-            for (Permit permit : byLicencePlate.get().getPermits()) {
+            for (Permit permit : vehicle.get().getPermits()) {
                 PermitDto permitDto = new PermitDto(permit);
                 list.add(permitDto);
             }
@@ -72,7 +73,7 @@ public class PermitController {
         User currentUser = authUtils.requireCurrentUser();
 
         Optional<Vehicle> vehicle = vehicleService.findById(permitRequest.vehicleId());
-        if (vehicle.isEmpty() || !vehicle.get().getOwner().getId().equals(currentUser.getId())) {
+        if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(currentUser)) {
             return HttpUtils.produceNotFoundResponse("Vehicle is not registered to you.");
         }
 
@@ -98,5 +99,15 @@ public class PermitController {
         Map<String, String> response = new HashMap<>();
         response.put("orderId", orderId.get());
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> deletePermit(@PathVariable Long id){
+        if(!permitService.existsById(id)){
+            return HttpUtils.produceNotFoundResponse("No permit for the given id: " + id);
+        }
+        permitService.deleteById(id);
+        return HttpUtils.produceOkResponse();
     }
 }

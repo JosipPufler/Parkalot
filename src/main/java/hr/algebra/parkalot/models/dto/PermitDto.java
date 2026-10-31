@@ -11,6 +11,6 @@ public record PermitDto(LocalDate startDate, PermitDuration permitDuration, Loca
     public PermitDto(Permit permit) throws ParseException {
         this(permit.getStartDate(), permit.getPermitDuration(), permit.getExpirationDate(), permit.isExpired(),
                 permit.isActive(), permit.getPrice(), new AreaDto(permit.getArea()), new VehicleDto(permit.getVehicle()),
-                permit.getVehicle().getOwner().getId(), permit.getVehicle().getOwner().getEmail());
+                permit.getBuyer().getId(), permit.getBuyer().getEmail());
     }
 }

@@ -21,7 +21,7 @@ public class PermitArchive {
         this.endDate = permit.getExpirationDate();
         this.areaName = permit.getArea().getName();
         this.zone = permit.getArea().getZone();
-        this.user = permit.getVehicle().getOwner();
+        this.user = permit.getBuyer();
         this.username = this.user.getFirstName() + " " + this.user.getLastName();
         this.email = this.user.getEmail();
         this.licencePlate = permit.getVehicle().getLicencePlate();

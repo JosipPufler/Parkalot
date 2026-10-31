@@ -13,6 +13,10 @@ public abstract class GeneralCrudService<K, T extends JpaRepository<K, Long>>  {
         this.repository = repository;
     }
 
+    public Boolean existsById(Long id) {
+        return repository.existsById(id);
+    }
+
     public List<K> findAll() {
         return repository.findAll();
     }
@@ -29,5 +33,10 @@ public abstract class GeneralCrudService<K, T extends JpaRepository<K, Long>>  {
     @Transactional
     public void delete(K entity) {
         repository.delete(entity);
+    }
+
+    @Transactional
+    public void deleteById(Long id) {
+        repository.deleteById(id);
     }
 }

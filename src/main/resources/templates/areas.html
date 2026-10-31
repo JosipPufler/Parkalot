@@ -267,17 +267,23 @@
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button"
-                                    class="btn btn-outline-secondary"
-                                    data-bs-dismiss="modal">
+                            <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal" id="cancel-permit">
                                 Cancel
                             </button>
 
-                            <button type="submit"
-                                    id="save-vehicle"
-                                    class="btn btn-primary">
-                                Register vehicle
+                            <button type="button" class="btn btn-primary"
+                                    id="confirm-permit">
+                                Continue to payment
                             </button>
+                        </div>
+
+                        <div class="modal-body d-none" id="paypal-payment-section">
+                            <p class="small text-muted">
+                                Complete your payment using PayPal.
+                            </p>
+
+                            <div id="paypal-button-container"></div>
                         </div>
                     </form>
                 </div>
@@ -395,6 +401,12 @@
 </div>
 
 <th:block layout:fragment="pageScripts">
+    <script th:src="@{https://www.paypal.com/sdk/js(
+            client-id=${paypalClientId},
+            currency='EUR',
+            intent='capture'
+        )}"></script>
+
     <script src="/js/leaflet.js"></script>
     <script src="/js/areas.js"></script>
 </th:block>
