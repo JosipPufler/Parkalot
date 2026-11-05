@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.repositories;
 
-import hr.algebra.parkalot.models.entity.ParkingCheckLog;
+import hr.algebra.parkalot.models.entities.ParkingCheckLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

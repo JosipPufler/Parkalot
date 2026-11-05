@@ -62,9 +62,7 @@ public class PayPalController {
 
         payPalService.verifyPaymentAmount(orderId, paidValue);
 
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .header("Location", "/mvc/history/confirmation")
-                .build();
+        return ResponseEntity.status(HttpStatus.FOUND).build();
     }
 
     private static Map<String, String> getValueMap(List<Map<String, Object>> purchaseUnits) {

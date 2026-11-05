@@ -1,8 +1,11 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.PermitDuration;
-import hr.algebra.parkalot.models.entity.Area;
+import hr.algebra.parkalot.models.enums.PermitDuration;
+import hr.algebra.parkalot.models.dtos.AreaDto;
+import hr.algebra.parkalot.models.entities.Area;
 import hr.algebra.parkalot.repositories.AreaRepo;
+import hr.algebra.parkalot.services.utils.Mapper;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -32,5 +35,19 @@ public class AreaService extends GeneralCrudService<Area, AreaRepo> {
 
     public Optional<Double> calculateAreaPermitPrice(Long areaId, PermitDuration permitDuration) {
         return repository.findById(areaId).map(value -> value.getZone().getPrice() * permitDuration.getMultiplier());
+    }
+
+    @Transactional
+    public Optional<Area> updateArea(AreaDto areaDto){
+        Optional<Area> areaOpt = findById(areaDto.id());
+        if (areaOpt.isEmpty())
+            return areaOpt;
+
+        Area newArea = Mapper.mapAreaDtoToArea(areaDto);
+        Area area = areaOpt.get();
+        area.setName(newArea.getName());
+        area.setZone(newArea.getZone());
+        area.setAreaPolygon(newArea.getAreaPolygon());
+        return Optional.of(save(area));
     }
 }

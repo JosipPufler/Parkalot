@@ -1,7 +1,7 @@
 package hr.algebra.parkalot.repositories;
 
-import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Vehicle;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.entities.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

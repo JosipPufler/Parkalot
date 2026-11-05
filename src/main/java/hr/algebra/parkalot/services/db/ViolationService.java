@@ -1,8 +1,10 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.entity.ParkingCheckLog;
-import hr.algebra.parkalot.models.entity.Violation;
+import hr.algebra.parkalot.models.dtos.ViolationUpdateForm;
+import hr.algebra.parkalot.models.entities.ParkingCheckLog;
+import hr.algebra.parkalot.models.entities.Violation;
 import hr.algebra.parkalot.repositories.ViolationRepo;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -43,5 +45,14 @@ public class ViolationService extends GeneralCrudService<Violation, ViolationRep
 
     public Optional<Violation> findByOrderId(String orderId){
         return repository.findByOrderId(orderId);
+    }
+
+    public Violation updateViolation(ViolationUpdateForm violationDto) {
+        Violation violation = findById(violationDto.id()).orElseThrow(() ->
+                new EntityNotFoundException("Violation with ID: " + violationDto.id() + " not found"));
+
+        violation.setActive(violationDto.active());
+        violation.setMessage(violationDto.message());
+        return repository.save(violation);
     }
 }

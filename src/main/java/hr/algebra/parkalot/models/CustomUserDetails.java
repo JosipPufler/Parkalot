@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.models;
 
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

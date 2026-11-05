@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.repositories;
 
-import hr.algebra.parkalot.models.entity.Area;
+import hr.algebra.parkalot.models.entities.Area;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

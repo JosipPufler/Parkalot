@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.entity.ParkingCheckLog;
+import hr.algebra.parkalot.models.entities.ParkingCheckLog;
 import hr.algebra.parkalot.repositories.ParkingCheckLogRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

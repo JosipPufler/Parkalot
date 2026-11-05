@@ -1,8 +1,8 @@
 package hr.algebra.parkalot.helper;
 
-import hr.algebra.parkalot.models.entity.Area;
-import hr.algebra.parkalot.models.entity.ParkingCheckLog;
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.entities.Area;
+import hr.algebra.parkalot.models.entities.ParkingCheckLog;
+import hr.algebra.parkalot.models.entities.User;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

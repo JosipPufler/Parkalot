@@ -1,9 +1,8 @@
 package hr.algebra.parkalot.services;
 
-import hr.algebra.parkalot.models.entity.Area;
-import hr.algebra.parkalot.models.entity.Permit;
-import hr.algebra.parkalot.models.entity.PermitArchive;
-import hr.algebra.parkalot.models.Zone;
+import hr.algebra.parkalot.models.entities.Area;
+import hr.algebra.parkalot.models.entities.Permit;
+import hr.algebra.parkalot.models.entities.PermitArchive;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.db.PermitArchiveService;
 import hr.algebra.parkalot.services.db.PermitService;

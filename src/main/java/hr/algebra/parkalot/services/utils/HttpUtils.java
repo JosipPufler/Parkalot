@@ -38,6 +38,10 @@ public final class HttpUtils {
         return produceErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
 
+    public static ResponseEntity<ProblemDetail> produceConflictErrorResponse(String message) {
+        return produceErrorResponse(HttpStatus.CONFLICT, message);
+    }
+
     public static ResponseEntity<Void> produceOkResponse() {
         return ResponseEntity.ok().build();
     }

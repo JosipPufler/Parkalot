@@ -1,11 +1,8 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.Role;
-import hr.algebra.parkalot.models.dto.AppealDto;
-import hr.algebra.parkalot.models.dto.AppealCreationDto;
-import hr.algebra.parkalot.models.dto.AppealEvidenceDto;
-import hr.algebra.parkalot.models.entity.*;
-import hr.algebra.parkalot.models.dto.ViolationDto;
+import hr.algebra.parkalot.models.enums.Role;
+import hr.algebra.parkalot.models.dtos.*;
+import hr.algebra.parkalot.models.entities.*;
 import hr.algebra.parkalot.services.PayPalService;
 import hr.algebra.parkalot.services.db.AppealEvidenceService;
 import hr.algebra.parkalot.services.db.AppealService;
@@ -15,12 +12,10 @@ import hr.algebra.parkalot.services.db.VehicleService;
 import hr.algebra.parkalot.services.db.ViolationService;
 import hr.algebra.parkalot.services.utils.Mapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -80,6 +75,13 @@ public class ViolationController {
         return HttpUtils.produceBadRequestResponse("Violation already resolved");
     }
 
+    @PutMapping()
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> updateViolation(@RequestBody ViolationUpdateForm violationUpdateForm) {
+        violationService.updateViolation(violationUpdateForm);
+        return HttpUtils.produceOkResponse();
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteViolation(@PathVariable Long id){
@@ -91,7 +93,7 @@ public class ViolationController {
     }
 
     @PostMapping(path = "/appeal", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> raiseViolationAppeal(@ModelAttribute AppealCreationDto appealCreationDto) throws IOException {
         User currentUser = authUtils.requireCurrentUser();
 
@@ -132,6 +134,10 @@ public class ViolationController {
         if (appeal.isEmpty()) {
             return HttpUtils.produceNotFoundResponse("Appeal not found");
         }
+        if (appeal.get().getResolved()) {
+            return HttpUtils.produceConflictErrorResponse("Appeal already resolved");
+        }
+
         appealService.approveAppeal(appeal.get());
 
         return HttpUtils.produceOkResponse();
@@ -144,6 +150,10 @@ public class ViolationController {
         if (appeal.isEmpty()) {
             return HttpUtils.produceNotFoundResponse("Appeal not found");
         }
+        if (appeal.get().getResolved()) {
+            return HttpUtils.produceConflictErrorResponse("Appeal already resolved");
+        }
+
         appealService.rejectAppeal(appeal.get());
 
         return HttpUtils.produceOkResponse();
@@ -151,7 +161,7 @@ public class ViolationController {
 
     @GetMapping(path = "/appeal/{evidenceId}")
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
-    public ResponseEntity<?> getAppealEvidence(@PathVariable Long evidenceId) {
+    public ResponseEntity<?> downloadAppealEvidence(@PathVariable Long evidenceId) {
         User currentUser = authUtils.requireCurrentUser();
         Optional<AppealEvidence> evidence = appealEvidenceService.findById(evidenceId);
 
@@ -168,6 +178,38 @@ public class ViolationController {
                     .body(evidence.get().getEvidence());
         }
         return HttpUtils.produceUnauthorizedResponse();
+    }
+
+    @GetMapping("/appeal/{appealId}/evidence")
+    @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
+    public ResponseEntity<List<AppealEvidenceDto>> getAppealEvidence(
+            @PathVariable Long appealId
+    ) {
+        User currentUser = authUtils.requireCurrentUser();
+
+        Appeal appeal = appealService.findById(appealId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (!Objects.equals(appeal.getUser().getId(), currentUser.getId())
+                && currentUser.getRole() != Role.OFFICER
+                && currentUser.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        List<AppealEvidenceDto> evidence = appealEvidenceService
+                .findByAppealId(appealId)
+                .stream()
+                .map(AppealEvidenceDto::new)
+                .toList();
+
+        return ResponseEntity.ok(evidence);
+    }
+
+    @PutMapping("/appeal")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> updateAppeal(@RequestBody AppealUpdateForm appealUpdateForm) {
+        appealService.updateAppeal(appealUpdateForm);
+        return HttpUtils.produceOkResponse();
     }
 
     @DeleteMapping("/appeal/{id}")

@@ -1,8 +1,8 @@
 package hr.algebra.parkalot.integration;
 
 import hr.algebra.parkalot.helper.AreaHelper;
-import hr.algebra.parkalot.models.Zone;
-import hr.algebra.parkalot.models.entity.Area;
+import hr.algebra.parkalot.models.enums.Zone;
+import hr.algebra.parkalot.models.entities.Area;
 import hr.algebra.parkalot.services.db.AreaService;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;

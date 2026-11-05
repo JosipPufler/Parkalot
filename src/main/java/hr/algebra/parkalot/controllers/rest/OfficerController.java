@@ -1,8 +1,7 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.*;
-import hr.algebra.parkalot.models.dto.*;
-import hr.algebra.parkalot.models.entity.*;
+import hr.algebra.parkalot.models.dtos.*;
+import hr.algebra.parkalot.models.entities.*;
 import hr.algebra.parkalot.services.*;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.db.ParkingCheckLogService;
@@ -32,36 +31,6 @@ public class OfficerController {
     private final ParkingCheckLogService parkingCheckLogService;
     private final AiService aiService;
 
-    @PostMapping
-    public ResponseEntity<?> checkVehicleStatus(@RequestBody PermitCheckRequestDto requestDto) throws ParseException {
-        LocalDateTime timestamp = LocalDateTime.now();
-        User currentUser = authUtils.requireCurrentUser();
-        if (currentUser.getRole() != Role.OFFICER) {
-            return HttpUtils.produceForbiddenResponse("You are not an officer");
-        }
-
-        Area currentArea = areaService.getCurrentArea(
-                requestDto.coordinates().latitude(),
-                requestDto.coordinates().longitude()
-        ).orElse(null);
-
-        if (currentArea == null) {
-            return HttpUtils.produceBadRequestResponse("Vehicle not in any zone");
-        }
-
-        Optional<Permit> permit = parkingService.checkParkingStatusIsValid(requestDto.licencePlate(), currentArea);
-        ParkingCheckLog parkingLog = parkingCheckLogService.save(ParkingCheckLog.builder()
-                .officer(currentUser)
-                .latitude(requestDto.coordinates().latitude())
-                .longitude(requestDto.coordinates().longitude())
-                .timestamp(timestamp)
-                .licencePlate(requestDto.licencePlate())
-                .inViolation(permit.isEmpty())
-                .resolvedArea(currentArea)
-                .build());
-        return generateParkingCheckResponse(timestamp, permit, parkingLog, requestDto);
-    }
-
     @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
     @PostMapping(value = "/scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> checkVehicleStatus(@RequestParam("image") MultipartFile image,
@@ -69,10 +38,6 @@ public class OfficerController {
                                                 @RequestParam("longitude") double longitude) throws ParseException, IOException {
         LocalDateTime timestamp = LocalDateTime.now();
         User currentUser = authUtils.requireCurrentUser();
-        // TODO CHANGE FROM ADMIN TO OFFICER
-        if (currentUser.getRole() != Role.ADMIN) {
-            return HttpUtils.produceForbiddenResponse("You are not an officer");
-        }
 
         Area currentArea = areaService.getCurrentArea(
                 latitude,

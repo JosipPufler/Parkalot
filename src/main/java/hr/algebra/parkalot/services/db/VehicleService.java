@@ -1,8 +1,10 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Vehicle;
+import hr.algebra.parkalot.models.dtos.VehicleDto;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.entities.Vehicle;
 import hr.algebra.parkalot.repositories.VehicleRepo;
+import hr.algebra.parkalot.services.utils.Mapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,8 +12,20 @@ import java.util.Optional;
 
 @Service
 public class VehicleService extends GeneralCrudService<Vehicle, VehicleRepo> {
-    protected VehicleService(VehicleRepo repository) {
+    private final UserService userService;
+    protected VehicleService(VehicleRepo repository, UserService userService) {
         super(repository);
+        this.userService = userService;
+    }
+
+    public Vehicle createVehicleFromDto(VehicleDto vehicleDto, User user) {
+        Vehicle vehicle = Mapper.mapVehicleDtoToVehicle(vehicleDto);
+
+        repository.save(vehicle);
+        user.addVehicle(vehicle);
+        userService.save(user);
+
+        return vehicle;
     }
 
     public List<Vehicle> findByOwner(User user) {

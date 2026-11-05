@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.repositories.UserRepo;
 import org.springframework.stereotype.Service;
 

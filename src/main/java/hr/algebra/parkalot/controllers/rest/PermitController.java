@@ -1,12 +1,13 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.Role;
-import hr.algebra.parkalot.models.dto.PermitRequestDto;
-import hr.algebra.parkalot.models.entity.Area;
-import hr.algebra.parkalot.models.entity.Permit;
-import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Vehicle;
-import hr.algebra.parkalot.models.dto.PermitDto;
+import hr.algebra.parkalot.models.enums.Role;
+import hr.algebra.parkalot.models.dtos.PermitRequestDto;
+import hr.algebra.parkalot.models.dtos.PermitUpdateForm;
+import hr.algebra.parkalot.models.entities.Area;
+import hr.algebra.parkalot.models.entities.Permit;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.entities.Vehicle;
+import hr.algebra.parkalot.models.dtos.PermitDto;
 import hr.algebra.parkalot.services.PayPalService;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.utils.AuthUtils;
@@ -20,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
 import java.util.*;
 
 @RestController
@@ -49,7 +49,7 @@ public class PermitController {
             }
             return ResponseEntity.ok(list);
         }
-        return HttpUtils.produceNotFoundResponse("This vehicle is not registered to you.");
+        return HttpUtils.produceNotFoundResponse("This vehicleDto is not registered to you.");
     }
 
     @GetMapping()
@@ -82,12 +82,11 @@ public class PermitController {
             return HttpUtils.produceNotFoundResponse("Area not found.");
         }
 
-        Optional<Permit> permitOpt = permitService.tryBuyPermit(Mapper.mapPermitRequestToPermit(permitRequest, vehicle.get(), area.get()));
+        Permit permit = Mapper.mapPermitRequestToPermit(permitRequest, vehicle.get(), area.get(), currentUser);
 
-        if (permitOpt.isEmpty()) {
+        if (permitService.permitsConflict(permit)) {
             return HttpUtils.produceBadRequestResponse("Permit is conflicting.");
         }
-        Permit permit = permitOpt.get();
         Optional<String> orderId = payPalService.createPermitOrder(permitRequest);
 
         if (orderId.isEmpty())
@@ -99,6 +98,13 @@ public class PermitController {
         Map<String, String> response = new HashMap<>();
         response.put("orderId", orderId.get());
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping()
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> updatePermit(@RequestBody PermitUpdateForm permitDto){
+        permitService.updatePermit(permitDto);
+        return HttpUtils.produceOkResponse();
     }
 
     @DeleteMapping("/{id}")

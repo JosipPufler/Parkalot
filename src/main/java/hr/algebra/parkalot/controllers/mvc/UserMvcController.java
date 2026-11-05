@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.controllers.mvc;
 
-import hr.algebra.parkalot.models.dto.RegistrationForm;
+import hr.algebra.parkalot.models.dtos.RegistrationForm;
 import hr.algebra.parkalot.services.db.UserService;
 import hr.algebra.parkalot.services.utils.Mapper;
 import jakarta.validation.Valid;

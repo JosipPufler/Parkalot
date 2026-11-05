@@ -1,7 +1,7 @@
 package hr.algebra.parkalot.helper;
 
-import hr.algebra.parkalot.models.PermitDuration;
-import hr.algebra.parkalot.models.entity.*;
+import hr.algebra.parkalot.models.enums.PermitDuration;
+import hr.algebra.parkalot.models.entities.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

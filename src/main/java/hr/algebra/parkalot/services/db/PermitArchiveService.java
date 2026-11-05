@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.models.entity.PermitArchive;
+import hr.algebra.parkalot.models.entities.PermitArchive;
 import hr.algebra.parkalot.repositories.PermitArchiveRepo;
 import org.springframework.stereotype.Service;
 

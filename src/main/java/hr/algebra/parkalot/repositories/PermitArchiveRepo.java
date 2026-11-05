@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.repositories;
 
-import hr.algebra.parkalot.models.entity.PermitArchive;
+import hr.algebra.parkalot.models.entities.PermitArchive;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

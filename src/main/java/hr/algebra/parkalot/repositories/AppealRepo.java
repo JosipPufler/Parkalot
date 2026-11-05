@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.repositories;
 
-import hr.algebra.parkalot.models.entity.Appeal;
+import hr.algebra.parkalot.models.entities.Appeal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

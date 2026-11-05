@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.configs;
 
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.services.JwtService;
 import hr.algebra.parkalot.services.db.UserService;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,9 +1,9 @@
 package hr.algebra.parkalot.services;
 
 import hr.algebra.parkalot.exceptions.PayPalException;
-import hr.algebra.parkalot.models.dto.PermitRequestDto;
-import hr.algebra.parkalot.models.entity.Permit;
-import hr.algebra.parkalot.models.entity.Violation;
+import hr.algebra.parkalot.models.dtos.PermitRequestDto;
+import hr.algebra.parkalot.models.entities.Permit;
+import hr.algebra.parkalot.models.entities.Violation;
 import hr.algebra.parkalot.services.db.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +26,9 @@ public class PayPalService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     @Value("${paypal.clientId}")
-    private String clientId;
+    private final String clientId;
     @Value("${paypal.secret}")
-    private String secret;
+    private final String secret;
 
     public Optional<String> createPermitOrder(PermitRequestDto permitRequestDto) {
         Optional<Double> price = areaService.calculateAreaPermitPrice(permitRequestDto.areaId(), permitRequestDto.permitDuration());

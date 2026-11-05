@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout.html}"
+      lang="en">
+
+<head>
+    <title>Parking Areas</title>
+
+    <th:block layout:fragment="pageStyles">
+        <link rel="stylesheet"
+              href="/css/leaflet.css">
+        <link rel="stylesheet" th:href="@{/css/areas.css}">
+    </th:block>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div th:replace="~{fragments/nav :: navbar}"></div>
+
+    <div class="container-fluid py-3">
+        <div id="notification-container"
+             class="position-fixed"
+             style="top: 20px; right: 20px; z-index: 2000; width: 350px; max-width: calc(100% - 40px);">
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h3 mb-1">Parking Areas</h1>
+                <p class="text-muted mb-0">
+                    Explore permit zones and their requirements.
+                </p>
+            </div>
+
+            <span class="badge text-bg-primary" id="area-count">
+            Loading areas...
+        </span>
+        </div>
+
+        <div class="map-wrapper">
+            <div id="parking-map"></div>
+
+            <div class="map-panel">
+                <div class="card shadow mb-3">
+                    <div class="card-body">
+                        <h2 class="h6">Map controls</h2>
+
+                        <input type="search"
+                               id="area-search"
+                               class="form-control mb-3"
+                               placeholder="Search parking areas...">
+
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="show-areas"
+                                   checked>
+                            <label class="form-check-label" for="show-areas">
+                                Show permit zones
+                            </label>
+                        </div>
+
+                        <hr>
+
+                        <div class="small">
+                <span class="d-inline-block rounded me-2"
+                      style="width: 12px; height: 12px;
+                             background: #0d6efd"></span>
+                            Permit zone
+                        </div>
+
+                        <div id="map-status"
+                             class="small text-muted mt-3"
+                             role="status">
+                            Loading map data...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin-only area creation -->
+                <div sec:authorize="hasRole('ADMIN')"
+                     class="card shadow">
+                    <div class="card-body">
+                        <h2 class="h6">Create parking area</h2>
+                        <p class="small text-muted">
+                            Start drawing, then click the map to add polygon vertices.
+                        </p>
+
+                        <div class="mb-3">
+                            <label for="new-area-name" class="form-label">
+                                Area name
+                            </label>
+                            <input id="new-area-name"
+                                   type="text"
+                                   class="form-control"
+                                   maxlength="100"
+                                   required
+                                   placeholder="e.g. City Centre">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="new-area-zone" class="form-label">
+                                Permit zone
+                            </label>
+                            <select id="new-area-zone"
+                                    class="custom-select"
+                                    required>
+                                <option value="" selected disabled>
+                                    Select a zone
+                                </option>
+                                <option value="ZONE_1">ZONE I</option>
+                                <option value="ZONE_2">ZONE II</option>
+                                <option value="ZONE_3">ZONE III</option>
+                            </select>
+                        </div>
+
+                        <div class="small text-muted mb-3" id="drawing-status"
+                             role="status">
+                            No vertices selected.
+                        </div>
+
+                        <div class="drawing-buttons">
+                            <button type="button"
+                                    id="start-drawing"
+                                    class="btn btn-outline-primary btn-sm">
+                                Start drawing
+                            </button>
+
+                            <button type="button"
+                                    id="clear-drawing"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    disabled>
+                                Clear
+                            </button>
+
+                            <button type="button"
+                                    id="undo-vertex"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    disabled>
+                                Undo vertex
+                            </button>
+
+                            <button type="button"
+                                    id="save-area"
+                                    class="btn btn-primary btn-sm"
+                                    disabled>
+                                Save area
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body text-center">
+                        <h3 class="h6 card-title">Licence plate scanner</h3>
+                        <p class="text-muted small">
+                            Select a location and upload an image to identify a licence plate.
+                        </p>
+                        <button type="button" class="btn btn-outline-primary btn-block"
+                                id="start-plate-scan">
+                            <i class="bi bi-camera"></i> Scan licence plate
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Vehicle sidebar toggle -->
+        <button type="button"
+                id="vehicle-sidebar-toggle"
+                class="btn btn-primary vehicle-sidebar-toggle"
+                aria-controls="vehicle-sidebar"
+                aria-expanded="false">
+            <span id="vehicle-toggle-icon">›</span>
+            My vehicles
+        </button>
+
+        <!-- Collapsible vehicleDto sidebar -->
+        <aside id="vehicle-sidebar"
+               class="vehicle-sidebar"
+               aria-label="My vehicles"
+               aria-hidden="true">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">My vehicles</h2>
+
+                <button type="button"
+                        class="close"
+                        id="close-vehicle-sidebar"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div id="vehicle-list">
+                <p class="text-muted small">
+                    Your registered vehicles will appear here.
+                </p>
+            </div>
+
+            <button type="button"
+                    class="btn btn-primary w-100 mt-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#register-vehicle-modal">
+                Register vehicle
+            </button>
+        </aside>
+
+        <!-- Vehicle registration modal -->
+        <div class="modal fade"
+             id="register-vehicle-modal"
+             tabindex="-1"
+             aria-labelledby="register-vehicle-title"
+             aria-hidden="true">
+
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+
+                    <form id="register-vehicle-form">
+                        <div class="modal-header">
+                            <h2 class="modal-title fs-5"
+                                id="register-vehicle-title">
+                                Register a vehicle
+                            </h2>
+
+                            <button type="button"
+                                    class="close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="vehicle-make" class="form-label">Make</label>
+                                <input type="text" id="vehicle-make" class="form-control"
+                                       maxlength="100" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="vehicle-model" class="form-label">Model</label>
+                                <input type="text" id="vehicle-model" class="form-control"
+                                       maxlength="100" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="vehicle-year" class="form-label">Year</label>
+                                <input type="number" id="vehicle-year" class="form-control"
+                                       min="1886" max="2100" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="vehicle-licence-plate" class="form-label">
+                                    Licence plate
+                                </label>
+                                <input type="text" id="vehicle-licence-plate"
+                                       class="form-control" maxlength="20" required>
+                            </div>
+
+                            <div id="vehicle-form-status" class="small" role="status"></div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    data-bs-dismiss="modal">
+                            </button>
+
+                            <button type="submit"
+                                    id="save-vehicle"
+                                    class="btn btn-primary">
+                                Register vehicle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permit request modal -->
+        <div class="modal fade" id="permit-modal" tabindex="-1"
+             role="dialog" aria-labelledby="permit-modal-title"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="permit-modal-title">
+                            Buy parking permit
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div id="permit-details-section">
+                            <p class="mb-1">
+                                <strong>Area:</strong>
+                                <span id="permit-area-name"></span>
+                            </p>
+
+                            <p class="mb-3">
+                                <strong>Vehicle:</strong>
+                                <span id="permit-vehicle"></span>
+                            </p>
+
+                            <div class="form-group">
+                                <label for="permit-start-date">Start date</label>
+                                <input type="date"
+                                       class="form-control"
+                                       id="permit-start-date"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="permit-duration">Duration</label>
+                                <select class="custom-select" id="permit-duration">
+                                    <option value="DAY">Day</option>
+                                    <option value="WEEK">Week</option>
+                                    <option value="MONTH">Month</option>
+                                    <option value="YEAR">Year</option>
+                                </select>
+                            </div>
+
+                            <p class="mb-0">
+                                <strong>End date:</strong>
+                                <span id="permit-end-date">—</span>
+                            </p>
+                        </div>
+
+                        <div id="permit-message"
+                             class="mt-3"
+                             role="alert"
+                             aria-live="polite"></div>
+
+                        <div id="paypal-payment-section" class="d-none">
+                            <p>Complete your payment using PayPal.</p>
+                            <div id="paypal-button-container"></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-dismiss="modal"
+                                id="cancel-permit">
+                            Cancel
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-primary"
+                                id="confirm-permit">
+                            Continue to payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="plate-scan-modal" tabindex="-1"
+             role="dialog" aria-labelledby="plate-scan-modal-title"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="plate-scan-modal-title">
+                            Scan licence plate
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <form id="plate-scan-form" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <p class="mb-3">
+                                <strong>Selected location:</strong>
+                                <span id="plate-scan-coordinates"></span>
+                            </p>
+
+                            <div class="form-group">
+                                <label for="plate-scan-image">Image</label>
+                                <input type="file" class="form-control-file"
+                                       id="plate-scan-image" name="image"
+                                       accept="image/*" required>
+                                <small class="form-text text-muted">
+                                    Upload a clear image showing the vehicle's license plate.
+                                </small>
+                            </div>
+
+                            <div id="plate-scan-result" role="status"
+                                 aria-live="polite"></div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"
+                                    id="submit-plate-scan">
+                                Upload and scan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script th:src="@{https://www.paypal.com/sdk/js(
+            client-id=${paypalClientId},
+            currency='EUR',
+            intent='capture'
+        )}"></script>
+
+    <script src="/js/leaflet.js"></script>
+    <script src="/js/vehicles.js"></script>
+    <script src="/js/map.js"></script>
+    <script src="/js/paypal.js"></script>
+</th:block>
+</body>
+</html>

@@ -1,7 +1,7 @@
 package hr.algebra.parkalot.services;
 
 import hr.algebra.parkalot.models.CustomUserDetails;
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.repositories.UserRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

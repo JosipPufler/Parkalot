@@ -1,8 +1,8 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Vehicle;
-import hr.algebra.parkalot.models.dto.PermitArchiveDto;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.entities.Vehicle;
+import hr.algebra.parkalot.models.dtos.PermitArchiveDto;
 import hr.algebra.parkalot.services.db.PermitArchiveService;
 import hr.algebra.parkalot.services.db.VehicleService;
 import hr.algebra.parkalot.services.utils.AuthUtils;
@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
-import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -33,7 +31,7 @@ public class PermitArchiveController {
             return ResponseEntity.ok(permitArchiveService.findByLicencePlate(vehicle.get().getLicencePlate())
                     .stream().map(PermitArchiveDto::new).toList());
         }
-        return HttpUtils.produceNotFoundResponse("This vehicle is not registered to you.");
+        return HttpUtils.produceNotFoundResponse("This vehicleDto is not registered to you.");
     }
 
     @GetMapping()

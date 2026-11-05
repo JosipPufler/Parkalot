@@ -7,15 +7,18 @@
     <title>My Permits</title>
 </head>
 <body>
-<div layout:fragment="content" class="container py-4">
+<div layout:fragment="content">
     <div th:replace="~{fragments/nav :: navbar}"></div>
-    <h2 class="mb-4">My Permits</h2>
 
-    <div id="permits-status" class="text-muted mb-3">
-        Loading permits...
+    <div class="container py-4">
+        <h2 class="mb-4">My Permits</h2>
+
+        <div id="permits-status" class="text-muted mb-3">
+            Loading permits...
+        </div>
+
+        <div id="permits-container"></div>
     </div>
-
-    <div id="permits-container"></div>
 </div>
 
 <th:block layout:fragment="pageScripts">

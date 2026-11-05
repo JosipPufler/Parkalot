@@ -1,9 +1,8 @@
 package hr.algebra.parkalot.integration;
 
-import hr.algebra.parkalot.models.dto.RegistrationForm;
+import hr.algebra.parkalot.models.dtos.RegistrationForm;
 import hr.algebra.parkalot.repositories.UserRepo;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

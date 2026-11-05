@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.services;
 
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.entities.User;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;

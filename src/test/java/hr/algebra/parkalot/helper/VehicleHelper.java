@@ -1,7 +1,7 @@
 package hr.algebra.parkalot.helper;
 
-import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Vehicle;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.entities.Vehicle;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

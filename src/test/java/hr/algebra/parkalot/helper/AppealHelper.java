@@ -1,8 +1,8 @@
 package hr.algebra.parkalot.helper;
 
-import hr.algebra.parkalot.models.entity.Appeal;
-import hr.algebra.parkalot.models.entity.User;
-import hr.algebra.parkalot.models.entity.Violation;
+import hr.algebra.parkalot.models.entities.Appeal;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.entities.Violation;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

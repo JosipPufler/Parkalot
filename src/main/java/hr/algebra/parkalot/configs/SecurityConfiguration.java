@@ -1,6 +1,6 @@
 package hr.algebra.parkalot.configs;
 
-import hr.algebra.parkalot.models.Role;
+import hr.algebra.parkalot.models.enums.Role;
 import hr.algebra.parkalot.services.CustomUserDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

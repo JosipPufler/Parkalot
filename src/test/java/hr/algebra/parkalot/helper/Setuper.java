@@ -1,8 +1,8 @@
 package hr.algebra.parkalot.helper;
 
 import hr.algebra.parkalot.configs.TokenFilter;
-import hr.algebra.parkalot.models.Role;
-import hr.algebra.parkalot.models.entity.User;
+import hr.algebra.parkalot.models.enums.Role;
+import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.repositories.UserRepo;
 import hr.algebra.parkalot.services.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
