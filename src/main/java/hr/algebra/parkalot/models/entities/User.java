@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -56,7 +57,9 @@ public class User {
     }
 
     public void addVehicle(Vehicle vehicle) {
-        vehicles.add(vehicle);
-        vehicle.getOwners().add(this);
+        if (vehicles.stream().noneMatch(x -> Objects.equals(x.getId(), vehicle.getId()))) {
+            vehicles.add(vehicle);
+            vehicle.getOwners().add(this);
+        }
     }
 }

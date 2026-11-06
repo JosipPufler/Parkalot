@@ -26,7 +26,7 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="area-select">Existing areas</label>
-                            <select id="area-select" class="form-control">
+                            <select id="area-select" class="form-control select2">
                                 <option value="">Select an area...</option>
                             </select>
                         </div>
@@ -45,11 +45,11 @@
 
                             <div class="form-group">
                                 <label for="area-zone">Zone</label>
-                                <select id="area-zone" class="form-control" required>
+                                <select id="area-zone" class="form-control select2" required>
                                     <option value="">Select a zone...</option>
-                                    <option value="ZONE_1">Zone 1</option>
-                                    <option value="ZONE_2">Zone 2</option>
-                                    <option value="ZONE_3">Zone 3</option>
+                                    <option value="ZONE_1">Zone I</option>
+                                    <option value="ZONE_2">Zone II</option>
+                                    <option value="ZONE_3">Zone III</option>
                                 </select>
                             </div>
 
@@ -110,11 +110,12 @@
 
 <th:block layout:fragment="pageStyles">
     <link rel="stylesheet" th:href="@{/css/leaflet.css}">
+    <link rel="stylesheet" th:href="@{/css/areas.css}">
 </th:block>
 
 <th:block layout:fragment="pageScripts">
     <script th:src="@{/js/leaflet.js}"></script>
-    <script th:src="@{/js/areas-admin.js}"></script>
+    <script th:src="@{/js/areas.js}"></script>
 </th:block>
 </body>
 </html>

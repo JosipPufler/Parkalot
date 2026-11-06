@@ -74,7 +74,7 @@ public final class Mapper {
         return Area.builder()
                 .id(areaDto.id())
                 .areaPolygon(polygon)
-                .zone(Zone.valueOf(areaDto.zone()))
+                .zone(areaDto.zone())
                 .name(areaDto.name())
                 .build();
     }

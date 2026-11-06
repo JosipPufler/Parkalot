@@ -1,28 +1,59 @@
 $(document).ready(function () {
     const container = $("#permits-container");
     const status = $("#permits-status");
-
-    $.ajax({
-        url: "/rest/permits",
-        method: "GET",
-        dataType: "json",
-        success: function (permit) {
-            renderPermits(permit);
-        },
-        error: function (xhr) {
-            status
-                .removeClass("text-muted")
-                .addClass("text-danger")
-                .text(xhr.status === 401
-                    ? "Please log in to view your permits."
-                    : "Failed to load permits.");
-        }
-    });
+    const isAdmin = $("#admin-flag").length > 0;
 
     $(document).on("click", "[data-collapse-target]", function () {
         const target = $(this).attr("data-collapse-target");
         $(target).collapse("toggle");
     });
+
+    $("#update-permit-form").on("submit", function (event) {
+        event.preventDefault();
+
+        const permit = {
+            id: Number($("#update-permit-id").val()),
+            startDate: $("#update-start-date").val(),
+            permitDuration: $("#update-duration").val(),
+            areaId: Number($("#update-area").val()),
+            vehicleId: Number($("#update-vehicle").val())
+        };
+
+        $.ajax({
+            url: "/rest/permits",
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(permit),
+
+            success: function () {
+                $("#update-permit-modal").modal("hide");
+                loadPermits();
+            },
+
+            error: function (xhr) {
+                alert(xhr.responseText || "Failed to update permit.");
+            }
+        });
+    });
+
+    function loadPermits() {
+        $.ajax({
+            url: "/rest/permits",
+            method: "GET",
+            dataType: "json",
+            success: function (permits) {
+                renderPermits(permits);
+            },
+            error: function (xhr) {
+                status
+                    .removeClass("text-muted")
+                    .addClass("text-danger")
+                    .text(xhr.status === 401
+                        ? "Please log in to view your permits."
+                        : "Failed to load permits.");
+            }
+        });
+    }
 
     function renderPermits(permits) {
         console.log(permits)
@@ -33,11 +64,10 @@ $(document).ready(function () {
             return;
         }
 
-        // Group permits by licence plate.
         const groups = {};
 
         permits.forEach(function (permit) {
-            const plate = permit.vehicle.licencePlate || "Unknown vehicle";
+            const plate = permit.vehicleDto.licencePlate || "Unknown vehicle";
 
             if (!groups[plate]) {
                 groups[plate] = [];
@@ -97,13 +127,13 @@ $(document).ready(function () {
 
         const message = $("<h5>")
             .addClass("card-title mb-0")
-            .text(permit.message || "Parking permit");
+            .text(`Permit #${permit.id}`);
 
         const active = permit.active === true;
 
         const badge = $("<span>")
-            .addClass(`badge ${active ? "badge-danger" : "badge-secondary"}`)
-            .text(active ? "Active" : "Inactive");
+            .addClass(`badge ${active ? "badge-success" : "badge-secondary"}`)
+            .text(active ? "Active" : permit.expired ? "Expired" : "Inactive");
 
         heading.append(message, badge);
 
@@ -113,12 +143,39 @@ $(document).ready(function () {
         addDetail(details, "Start date", formatDate(permit.startDate));
         addDetail(details, "Expiration date", formatDate(permit.endDate));
         addDetail(details, "Duration", permit.permitDuration);
-        addDetail(details, "Status", permit.active ? "Active" : permit.expired ? "Expired" : "Inactive");
+        addDetail(details, "Status", active ? "Active" : permit.expired ? "Expired" : "Inactive");
         addDetail(details, "Cost", `${permit.price}€`);
 
-        body.append(heading, details);
-        card.append(body);
+        if (isAdmin) {
+            addDetail(details, "Buyer", permit.email);
+        }
 
+        body.append(heading, details);
+
+        if (isAdmin) {
+            const actions = $("<div>").addClass("mt-3 d-flex justify-content-end");
+
+            const updateButton = $("<button>")
+                .addClass("btn btn-sm btn-primary mr-2")
+                .text("Update")
+                .attr("type", "button")
+                .on("click", function () {
+                    openUpdateModal(permit);
+                });
+
+            const deleteButton = $("<button>")
+                .addClass("btn btn-sm btn-danger")
+                .text("Delete")
+                .attr("type", "button")
+                .on("click", function () {
+                    deletePermit(permit.id);
+                });
+
+            actions.append(updateButton, deleteButton);
+            body.append(actions);
+        }
+
+        card.append(body);
         return card;
     }
 
@@ -129,13 +186,65 @@ $(document).ready(function () {
         parent.append(row);
     }
 
-    function formatDate(value) {
-        if (!value) return "N/A";
+    function deletePermit(id) {
+        if (!confirm(`Are you sure you want to delete permit #${id}?`)) {
+            return;
+        }
 
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) return value;
-
-        return date.toLocaleString();
+        $.ajax({
+            url: `/rest/permits/${id}`,
+            method: "DELETE",
+            success: function () {
+                loadPermits();
+            },
+            error: function (xhr) {
+                alert(xhr.responseText || "Failed to delete permit.");
+            }
+        });
     }
+
+    function openUpdateModal(permit) {
+        $("#update-permit-id").val(permit.id);
+        $("#update-start-date").val(permit.startDate);
+        $("#update-duration").val(permit.permitDuration);
+
+        $.when(
+            $.getJSON("/rest/area"),
+            $.getJSON("/rest/vehicle")
+        ).done(function (areasResponse, vehiclesResponse) {
+
+            const areas = areasResponse[0];
+            const vehicles = vehiclesResponse[0];
+
+            const areaSelect = $("#update-area");
+            const vehicleSelect = $("#update-vehicle");
+
+            areaSelect.empty();
+            vehicleSelect.empty();
+
+            areas.forEach(function (area) {
+                $("<option>")
+                    .val(area.id)
+                    .text(`${area.name} (${area.zoneName})`)
+                    .appendTo(areaSelect);
+            });
+
+            vehicles.forEach(function (vehicle) {
+                $("<option>")
+                    .val(vehicle.id)
+                    .text(`${vehicle.licencePlate} - ${vehicle.make} ${vehicle.model}`)
+                    .appendTo(vehicleSelect);
+            });
+
+            areaSelect.val(permit.areaDto.id);
+            vehicleSelect.val(permit.vehicleDto.id);
+
+            $("#update-permit-modal").modal("show");
+
+        }).fail(function () {
+            alert("Failed to load areas or vehicles.");
+        });
+    }
+
+    loadPermits();
 });

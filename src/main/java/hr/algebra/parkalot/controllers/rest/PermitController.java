@@ -35,7 +35,7 @@ public class PermitController {
 
     @GetMapping("/{licencePlate}")
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
-    public ResponseEntity<?> getPermitsForVehicle(@PathVariable String licencePlate) throws ParseException {
+    public ResponseEntity<?> getPermitsForVehicle(@PathVariable String licencePlate) {
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(licencePlate);
         User currentUser = authUtils.requireCurrentUser();
 
@@ -54,8 +54,13 @@ public class PermitController {
 
     @GetMapping()
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<?> getPermits() throws ParseException {
+    public ResponseEntity<?> getPermits() {
         User currentUser = authUtils.requireCurrentUser();
+
+        if (currentUser.getRole() == Role.ADMIN) {
+            return HttpUtils.produceOkResponseWithBody(permitService
+                    .findAll().stream().map(PermitDto::new).toList());
+        }
 
         List<PermitDto> list = new ArrayList<>();
         for (Vehicle x : currentUser.getVehicles()) {
@@ -64,7 +69,7 @@ public class PermitController {
                 list.add(permitDto);
             }
         }
-        return ResponseEntity.ok(list);
+        return HttpUtils.produceOkResponseWithBody(list);
     }
 
     @PostMapping()

@@ -210,7 +210,7 @@ $(document).ready(function () {
             );
         });
 
-        areaSelect.val(selectedAreaId ?? "");
+        areaSelect.val(selectedAreaId ?? "").trigger("change.select2");
     }
 
     function renderAreaLayers() {
@@ -246,7 +246,7 @@ $(document).ready(function () {
 
         $("#area-id").val(area.id);
         $("#area-name").val(area.name);
-        $("#area-zone").val(area.zone);
+        $("#area-zone").val(area.zone).trigger("change.select2");
 
         coordinates = (area.coordinates || []).map(point => ({
             latitude: point.latitude,
@@ -304,7 +304,15 @@ $(document).ready(function () {
         coordinates.forEach(function (point, index) {
             const marker = L.marker(
                 [point.latitude, point.longitude],
-                { draggable: true }
+                {
+                    draggable: true,
+                    icon: L.divIcon({
+                        className: "custom-marker",
+                        html: '<div class="marker-dot"></div>',
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    })
+                }
             );
 
             marker.bindTooltip(`Point ${index + 1}`);

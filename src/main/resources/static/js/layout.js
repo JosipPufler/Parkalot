@@ -41,3 +41,9 @@ window.fetch = async function (...args) {
 
     return originalFetch(...args);
 };
+
+$(".select2").select2({
+    width: "100%",
+    placeholder: "Select an option...",
+    allowClear: true
+});

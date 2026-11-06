@@ -45,4 +45,8 @@ public final class HttpUtils {
     public static ResponseEntity<Void> produceOkResponse() {
         return ResponseEntity.ok().build();
     }
+
+    public static ResponseEntity<?> produceOkResponseWithBody(Object body) {
+        return ResponseEntity.ok(body);
+    }
 }

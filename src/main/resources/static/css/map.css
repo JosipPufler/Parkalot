@@ -1,0 +1,105 @@
+.map-wrapper {
+    position: relative;
+    height: calc(100vh - 110px);
+    min-height: 450px;
+}
+
+#parking-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 0.5rem;
+}
+
+.map-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
+    width: 280px;
+    max-width: calc(100% - 32px);
+}
+
+.drawing-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.drawing-buttons button {
+    width: 100%;
+}
+
+#start-drawing,
+#save-area {
+    grid-column: 1 / -1;
+}
+
+
+/* Vehicle sidebar toggle */
+.vehicle-sidebar-toggle {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 1040;
+    border-radius: 0 0.5rem 0.5rem 0;
+    writing-mode: vertical-rl;
+    padding: 1rem 0.5rem;
+}
+
+/* Collapsible vehicleDto panel */
+.vehicle-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1045;
+    width: 320px;
+    max-width: 85vw;
+    height: 100vh;
+    padding: 1.25rem;
+    overflow-y: auto;
+    box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.15);
+    background: var(--white);
+    border-right: 1px solid var(--dark);
+
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s ease;
+}
+
+.vehicle-sidebar.open {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+/* Vehicle cards */
+.vehicle-card {
+    margin-bottom: 0.75rem;
+}
+
+.vehicle-card .card-body {
+    padding: 1rem;
+}
+
+.vehicle-card {
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.vehicle-card[aria-pressed="true"] {
+    border: 2px solid #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.vehicle-card:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vehicle-sidebar {
+        transition: none;
+    }
+}

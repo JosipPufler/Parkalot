@@ -1,10 +1,12 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.models.dtos.VehicleUpdateForm;
 import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.models.entities.Vehicle;
 import hr.algebra.parkalot.models.dtos.PermitArchiveDto;
 import hr.algebra.parkalot.models.dtos.VehicleDetailsDto;
 import hr.algebra.parkalot.models.dtos.VehicleDto;
+import hr.algebra.parkalot.models.enums.Role;
 import hr.algebra.parkalot.services.utils.AuthUtils;
 import hr.algebra.parkalot.services.db.PermitArchiveService;
 import hr.algebra.parkalot.services.db.VehicleService;
@@ -31,8 +33,12 @@ public class VehicleController {
     public ResponseEntity<?> getAllVehicles() {
         User currentUser = authUtils.requireCurrentUser();
 
+        if (currentUser.getRole() == Role.ADMIN) {
+            return HttpUtils.produceOkResponseWithBody(vehicleService.findAll().stream().map(VehicleDto::new).toList());
+        }
+
         List<VehicleDto> vehicles = vehicleService.findByOwner(currentUser).stream().map(VehicleDto::new).toList();
-        return ResponseEntity.ok(vehicles);
+        return HttpUtils.produceOkResponseWithBody(vehicles);
     }
 
     @GetMapping("/{licencePlate}")
@@ -51,7 +57,7 @@ public class VehicleController {
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> createVehicle(@RequestBody VehicleDto vehicleDto) {
         Vehicle vehicle = vehicleService.createVehicleFromDto(vehicleDto, authUtils.requireCurrentUser());
-        return ResponseEntity.ok(new VehicleDto(vehicle));
+        return HttpUtils.produceOkResponseWithBody(new VehicleDto(vehicle));
     }
 
     @DeleteMapping("/{id}")
@@ -62,5 +68,11 @@ public class VehicleController {
         }
         vehicleService.deleteById(id);
         return HttpUtils.produceOkResponse();
+    }
+
+    @PutMapping()
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> updateVehicle(@RequestBody VehicleUpdateForm vehicleDto) {
+        return HttpUtils.produceOkResponseWithBody(new VehicleDto(vehicleService.updateVehicle(vehicleDto)));
     }
 }

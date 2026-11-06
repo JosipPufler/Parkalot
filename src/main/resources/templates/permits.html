@@ -2,13 +2,15 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout.html}">
+      layout:decorate="~{layout.html}" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <title>My Permits</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div th:replace="~{fragments/nav :: navbar}"></div>
+
+    <span id="admin-flag" sec:authorize="hasRole('ADMIN')" hidden></span>
 
     <div class="container py-4">
         <h2 class="mb-4">My Permits</h2>
@@ -18,6 +20,69 @@
         </div>
 
         <div id="permits-container"></div>
+    </div>
+
+    <div class="modal fade" id="update-permit-modal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="update-permit-title"
+         aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="update-permit-title">
+                        Update Permit
+                    </h5>
+
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="update-permit-form">
+                        <input type="hidden" id="update-permit-id">
+
+                        <div class="form-group">
+                            <label for="update-start-date">Start date</label>
+                            <input type="date" class="form-control"
+                                   id="update-start-date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="update-duration">Duration</label>
+                            <select class="form-control select2" id="update-duration" required>
+                                <option value="DAY">Day</option>
+                                <option value="WEEK">Week</option>
+                                <option value="MONTH">Month</option>
+                                <option value="YEAR">Year</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="update-area">Area</label>
+                            <select class="form-control select2" id="update-area" required></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="update-vehicle">Vehicle</label>
+                            <select class="form-control select2" id="update-vehicle" required></select>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">Cancel</button>
+
+                    <button type="submit" form="update-permit-form"
+                            class="btn btn-primary">Save changes</button>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
 
