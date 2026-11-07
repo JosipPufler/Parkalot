@@ -1,6 +1,7 @@
 package hr.algebra.parkalot.configs;
 
 import hr.algebra.parkalot.exceptions.CurrentUserNotFoundException;
+import hr.algebra.parkalot.exceptions.DbConflictException;
 import hr.algebra.parkalot.services.utils.HttpUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.locationtech.jts.io.ParseException;
@@ -30,6 +31,11 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(PSQLException.class)
     public ResponseEntity<ProblemDetail> handlePSQLException(PSQLException e) {
+        return HttpUtils.produceConflictErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(DbConflictException.class)
+    public ResponseEntity<ProblemDetail> handleDbConflictException(DbConflictException e) {
         return HttpUtils.produceConflictErrorResponse(e.getMessage());
     }
 }

@@ -1,6 +1,5 @@
 package hr.algebra.parkalot.controllers.rest;
 
-import hr.algebra.parkalot.models.dtos.VehicleUpdateForm;
 import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.models.entities.Vehicle;
 import hr.algebra.parkalot.models.dtos.PermitArchiveDto;
@@ -55,8 +54,15 @@ public class VehicleController {
 
     @PostMapping()
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
+    public ResponseEntity<?> registerVehicle(@RequestBody VehicleDto vehicleDto) {
+        Vehicle vehicle = vehicleService.registerVehicle(vehicleDto, authUtils.requireCurrentUser());
+        return HttpUtils.produceOkResponseWithBody(new VehicleDto(vehicle));
+    }
+
+    @PostMapping("/insert")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> createVehicle(@RequestBody VehicleDto vehicleDto) {
-        Vehicle vehicle = vehicleService.createVehicleFromDto(vehicleDto, authUtils.requireCurrentUser());
+        Vehicle vehicle = vehicleService.createVehicle(vehicleDto);
         return HttpUtils.produceOkResponseWithBody(new VehicleDto(vehicle));
     }
 
@@ -72,7 +78,7 @@ public class VehicleController {
 
     @PutMapping()
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<?> updateVehicle(@RequestBody VehicleUpdateForm vehicleDto) {
+    public ResponseEntity<?> updateVehicle(@RequestBody VehicleDto vehicleDto) {
         return HttpUtils.produceOkResponseWithBody(new VehicleDto(vehicleService.updateVehicle(vehicleDto)));
     }
 }

@@ -57,9 +57,17 @@ public class User {
     }
 
     public void addVehicle(Vehicle vehicle) {
-        if (vehicles.stream().noneMatch(x -> Objects.equals(x.getId(), vehicle.getId()))) {
+        if (!vehicles.contains(vehicle)) {
             vehicles.add(vehicle);
+        }
+
+        if (!vehicle.getOwners().contains(this)) {
             vehicle.getOwners().add(this);
         }
+    }
+
+    public void removeVehicle(Vehicle vehicle) {
+        vehicles.remove(vehicle);
+        vehicle.getOwners().remove(this);
     }
 }

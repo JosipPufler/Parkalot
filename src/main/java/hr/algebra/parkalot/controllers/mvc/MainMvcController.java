@@ -19,6 +19,8 @@ public class MainMvcController {
     private static final String VIOLATIONS_PAGE_NAME = "violations";
     private static final String PERMITS_PAGE_NAME = "permits";
     private static final String APPEALS_PAGE_NAME = "appeals";
+    private static final String VEHICLES_ADMIN_PAGE = "admin/vehicles";
+    private static final String USERS_ADMIN_PAGE = "admin/users";
 
     private static final String USER_ROLE_ATTRIBUTE = "userRole";
     private static final String PAYPAL_CLIENT_ID_ATTRIBUTE = "paypalClientId";
@@ -60,6 +62,20 @@ public class MainMvcController {
     public String showAppealsPage(Model model) {
         addUniversalProperties(model);
         return APPEALS_PAGE_NAME;
+    }
+
+    @GetMapping("/admin/vehicles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String showVehiclesPage(Model model) {
+        addUniversalProperties(model);
+        return VEHICLES_ADMIN_PAGE;
+    }
+
+    @GetMapping("/admin/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String showUsersPage(Model model) {
+        addUniversalProperties(model);
+        return USERS_ADMIN_PAGE;
     }
 
     private void addUniversalProperties(Model model){
