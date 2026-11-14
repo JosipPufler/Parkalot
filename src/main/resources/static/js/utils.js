@@ -1,3 +1,7 @@
+$("#toast").on("hidden.bs.toast", function () {
+    $(this).css("display", "none");
+});
+
 function showToast(type, title, message) {
     const toast = $("#toast");
 
@@ -12,6 +16,7 @@ function showToast(type, title, message) {
     $("#toastTitle").text(title);
     $("#toastBody").text(message);
 
+    toast.css("display", "block");
     toast.toast("show");
 }
 

@@ -1,5 +1,8 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.exceptions.LocalizedBadRequestException;
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.models.enums.Role;
 import hr.algebra.parkalot.models.dtos.PermitRequestDto;
 import hr.algebra.parkalot.models.dtos.PermitUpdateForm;
@@ -9,6 +12,7 @@ import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.models.entities.Vehicle;
 import hr.algebra.parkalot.models.dtos.PermitDto;
 import hr.algebra.parkalot.services.PayPalService;
+import hr.algebra.parkalot.services.PermitEligibilityService;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.utils.AuthUtils;
 import hr.algebra.parkalot.services.utils.HttpUtils;
@@ -31,6 +35,7 @@ public class PermitController {
     private final AreaService areaService;
     private final AuthUtils authUtils;
     private final PayPalService payPalService;
+    private final PermitEligibilityService permitEligibilityService;
 
     @GetMapping("/{licencePlate}")
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
@@ -48,7 +53,7 @@ public class PermitController {
             }
             return ResponseEntity.ok(list);
         }
-        return HttpUtils.produceNotFoundResponse("This vehicleDto is not registered to you.");
+        throw new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_OWNED);
     }
 
     @GetMapping()
@@ -75,26 +80,22 @@ public class PermitController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> requestPermit(@RequestBody PermitRequestDto permitRequest) {
         User currentUser = authUtils.requireCurrentUser();
+        Vehicle vehicle = vehicleService.findById(permitRequest.vehicleId()).orElseThrow(() ->
+                new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND, permitRequest.vehicleId()));
+        Area area = areaService.findById(permitRequest.areaId()).orElseThrow(() ->
+                new LocalizedNotFoundException(LocalizedExceptionKeys.AREA_NOT_FOUND, permitRequest.areaId()));
 
-        Optional<Vehicle> vehicle = vehicleService.findById(permitRequest.vehicleId());
-        if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(currentUser)) {
-            return HttpUtils.produceNotFoundResponse("Vehicle is not registered to you.");
-        }
-
-        Optional<Area> area = areaService.findById(permitRequest.areaId());
-        if (area.isEmpty()) {
-            return HttpUtils.produceNotFoundResponse("Area not found.");
-        }
-
-        Permit permit = Mapper.mapPermitRequestToPermit(permitRequest, vehicle.get(), area.get(), currentUser);
+        Permit permit = Mapper.mapPermitRequestToPermit(permitRequest, vehicle, area, currentUser);
 
         if (permitService.permitsConflict(permit)) {
-            return HttpUtils.produceBadRequestResponse("Permit is conflicting.");
+            throw new LocalizedBadRequestException(LocalizedExceptionKeys.PERMIT_CONFLICTING);
         }
+        permitEligibilityService.validateEligibility(currentUser, vehicle, area);
+
         Optional<String> orderId = payPalService.createPermitOrder(permitRequest);
 
         if (orderId.isEmpty())
-            return HttpUtils.produceBadRequestResponse("Invalid request");
+            throw new LocalizedBadRequestException(LocalizedExceptionKeys.PAYMENT_CREATE_ORDER);
 
         permit.setPaypalId(orderId.get());
         permitService.save(permit);
@@ -102,6 +103,40 @@ public class PermitController {
         Map<String, String> response = new HashMap<>();
         response.put("orderId", orderId.get());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createAdminPermit(
+            @RequestBody PermitRequestDto permitRequest) {
+
+        Vehicle vehicle = vehicleService.findById(permitRequest.vehicleId())
+                .orElseThrow(() -> new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND, permitRequest.vehicleId()));
+
+        Area area = areaService.findById(permitRequest.areaId())
+                .orElseThrow(() -> new LocalizedNotFoundException(LocalizedExceptionKeys.AREA_NOT_FOUND, permitRequest.areaId()));
+
+        User buyer = vehicle.getOwners().stream()
+                .min(Comparator.comparing(User::getId))
+                .orElseThrow(() -> new LocalizedNotFoundException(
+                        LocalizedExceptionKeys.VEHICLE_NO_OWNERS));
+
+        Permit permit = Mapper.mapPermitRequestToPermit(
+                permitRequest, vehicle, area, buyer);
+
+        if (permitService.permitsConflict(permit)) {
+            throw new LocalizedBadRequestException(LocalizedExceptionKeys.PERMIT_CONFLICTING);
+        }
+
+        permitEligibilityService.validateEligibility(buyer, vehicle, area);
+
+        permit.setPaymentTime(java.time.LocalDateTime.now());
+        permit.setPaypalId(null);
+
+        Permit savedPermit = permitService.save(permit);
+
+        return HttpUtils.produceOkResponseWithBody(
+                new PermitDto(savedPermit));
     }
 
     @PutMapping()
@@ -115,7 +150,7 @@ public class PermitController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deletePermit(@PathVariable Long id){
         if(!permitService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No permit for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.PERMIT_NOT_FOUND, id);
         }
         permitService.deleteById(id);
         return HttpUtils.produceOkResponse();

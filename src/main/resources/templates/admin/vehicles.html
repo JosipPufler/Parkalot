@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"
+<html th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout.html}">
 
 <head>
-    <title>Manage Vehicles</title>
+    <title th:text="#{vehicle.manage}">Manage Vehicles</title>
 </head>
 
 <body>
@@ -18,11 +18,11 @@
     <div class="container py-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Manage Vehicles</h2>
+            <h2 th:text="#{vehicle.manage}">Manage Vehicles</h2>
 
             <button class="btn btn-primary"
                     id="create-vehicle"
-                    type="button">
+                    type="button" th:text="#{vehicle.add}">
                 <i class="bi bi-plus-lg"></i>
                 Add vehicle
             </button>
@@ -34,12 +34,12 @@
             <table class="table table-hover">
                 <thead>
                 <tr>
-                    <th>Licence plate</th>
-                    <th>Make</th>
-                    <th>Model</th>
-                    <th>Year</th>
-                    <th>Owners</th>
-                    <th class="text-end">Actions</th>
+                    <th th:text="#{vehicle.licensePlate}">Licence plate</th>
+                    <th th:text="#{vehicle.make}">Make</th>
+                    <th th:text="#{vehicle.model}">Model</th>
+                    <th th:text="#{vehicle.year}">Year</th>
+                    <th th:text="#{vehicle.owners}">Owners</th>
+                    <th th:text="#{actions}" class="text-end">Actions</th>
                 </tr>
                 </thead>
                 <tbody id="vehicles-table-body"></tbody>
@@ -55,7 +55,7 @@
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title" id="vehicle-modal-title">
+                    <h5 class="modal-title" id="vehicle-modal-title" th:text="#{vehicle.add}">
                         Add vehicle
                     </h5>
 
@@ -72,35 +72,61 @@
                         <input type="hidden" id="vehicle-id">
 
                         <div class="form-group">
-                            <label for="vehicle-make">Make</label>
+                            <label for="vehicle-make" th:text="#{vehicle.make}">Make</label>
                             <input type="text" class="form-control"
                                    id="vehicle-make" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="vehicle-model">Model</label>
+                            <label for="vehicle-model" th:text="#{vehicle.model}">Model</label>
                             <input type="text" class="form-control"
                                    id="vehicle-model" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="vehicle-year">Year</label>
+                            <label for="vehicle-year" th:text="#{vehicle.year}">Year</label>
                             <input type="number" class="form-control"
                                    id="vehicle-year"
                                    min="1900" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="vehicle-licence-plate">Licence plate</label>
+                            <label for="vehicle-licence-plate" th:text="#{vehicle.licensePlate}">Licence plate</label>
                             <input type="text" class="form-control"
                                    id="vehicle-licence-plate" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="vehicle-owners">Owners</label>
+                            <label for="vehicle-owners" th:text="#{vehicle.owners}">Owners</label>
                             <select id="vehicle-owners"
                                     class="form-control select2"
                                     multiple required>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vehicle-emission-class"
+                                   th:text="#{vehicle.emissionClass}">
+                                Emission class
+                            </label>
+
+                            <select id="vehicle-emission-class"
+                                    class="form-select"
+                                    required>
+                                <option value=""
+                                        selected
+                                        disabled
+                                        th:text="#{vehicle.emissionClass.select}">
+                                    Select emission class
+                                </option>
+
+                                <option value="EURO_1">Euro 1</option>
+                                <option value="EURO_2">Euro 2</option>
+                                <option value="EURO_3">Euro 3</option>
+                                <option value="EURO_4">Euro 4</option>
+                                <option value="EURO_5">Euro 5</option>
+                                <option value="EURO_6">Euro 6</option>
+                                <option value="EURO_7">Euro 7</option>
                             </select>
                         </div>
 
@@ -112,12 +138,12 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">
+                            data-dismiss="modal" th:text="#{cancel}">
                         Cancel
                     </button>
 
                     <button type="submit" form="vehicle-admin-form"
-                            class="btn btn-primary" id="save-vehicle">
+                            class="btn btn-primary" id="save-vehicle" th:text="#{vehicle.save}">
                         Save vehicle
                     </button>
                 </div>

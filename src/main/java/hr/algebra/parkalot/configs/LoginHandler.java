@@ -38,6 +38,6 @@ public class LoginHandler implements AuthenticationSuccessHandler {
 
         response.addHeader("Set-Cookie", access.toString());
 
-        response.sendRedirect("/mvc/areas");
+        response.sendRedirect("/mvc/map");
     }
 }

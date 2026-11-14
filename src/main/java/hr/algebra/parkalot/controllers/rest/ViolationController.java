@@ -1,18 +1,24 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.exceptions.LocalizedBadRequestException;
+import hr.algebra.parkalot.exceptions.LocalizedConflictException;
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.models.enums.Role;
 import hr.algebra.parkalot.models.dtos.*;
 import hr.algebra.parkalot.models.entities.*;
 import hr.algebra.parkalot.services.PayPalService;
-import hr.algebra.parkalot.services.db.AppealEvidenceService;
-import hr.algebra.parkalot.services.db.AppealService;
+import hr.algebra.parkalot.services.db.*;
 import hr.algebra.parkalot.services.utils.AuthUtils;
 import hr.algebra.parkalot.services.utils.HttpUtils;
-import hr.algebra.parkalot.services.db.VehicleService;
-import hr.algebra.parkalot.services.db.ViolationService;
 import hr.algebra.parkalot.services.utils.Mapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,10 +39,14 @@ public class ViolationController {
     private final VehicleService vehicleService;
     private final AppealService appealService;
     private final AppealEvidenceService appealEvidenceService;
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<?> getViolations() {
         User currentUser = authUtils.requireCurrentUser();
+
+        if (currentUser.getRole() == Role.ADMIN)
+            return HttpUtils.produceOkResponseWithBody(violationService.findAll().stream().map(ViolationDto::new).toList());
 
         List<Violation> violations = vehicleService.findByOwner(currentUser).stream()
                 .flatMap(vehicle -> violationService.findViolationsByLicencePlate(vehicle.getLicencePlate()).stream()).toList();
@@ -56,13 +66,13 @@ public class ViolationController {
 
         Optional<Violation> byId = violationService.findById(violationId);
         if (byId.isEmpty()) {
-            return HttpUtils.produceNotFoundResponse("Violation not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VIOLATION_NOT_FOUND, violationId);
         }
 
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(byId.get().getParkingCheckLog().getLicencePlate());
 
         if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(currentUser)) {
-            return HttpUtils.produceNotFoundResponse("Vehicle not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND_PLATE, byId.get().getParkingCheckLog().getLicencePlate());
         }
 
         Violation violation = byId.get();
@@ -72,7 +82,7 @@ public class ViolationController {
             violationService.save(violation);
             return ResponseEntity.ok().build();
         }
-        return HttpUtils.produceBadRequestResponse("Violation already resolved");
+        throw new LocalizedBadRequestException(LocalizedExceptionKeys.VIOLATION_ALREADY_RESOLVED);
     }
 
     @PutMapping()
@@ -86,7 +96,7 @@ public class ViolationController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteViolation(@PathVariable Long id){
         if(!violationService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No violation for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VIOLATION_NOT_FOUND, id);
         }
         violationService.deleteById(id);
         return HttpUtils.produceOkResponse();
@@ -99,11 +109,11 @@ public class ViolationController {
 
         Optional<Violation> violation = violationService.findById(appealCreationDto.violationId());
         if (violation.isEmpty()) {
-            return HttpUtils.produceNotFoundResponse("Violation not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VIOLATION_NOT_FOUND, appealCreationDto.violationId());
         }
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(violation.get().getParkingCheckLog().getLicencePlate());
         if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(currentUser)) {
-            return HttpUtils.produceNotFoundResponse("Vehicle not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND_PLATE, violation.get().getParkingCheckLog().getLicencePlate());
         }
 
         Appeal appeal = appealService.save(Mapper.mapAppealRequestToAppeal(appealCreationDto, violation.get(), currentUser));
@@ -116,15 +126,42 @@ public class ViolationController {
         return ResponseEntity.ok(appealDto);
     }
 
+    @PostMapping("/appeal/insert")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<?> raiseViolationAppeal(@ModelAttribute AdminAppealCreationDto appealCreationDto) throws IOException {
+        User user = userService.findById(appealCreationDto.ownerId()).orElseThrow(() ->
+            new LocalizedNotFoundException(LocalizedExceptionKeys.USER_NOT_FOUND, appealCreationDto.ownerId()));
+
+        Violation violation = violationService.findById(appealCreationDto.violationId()).orElseThrow(() ->
+                new LocalizedNotFoundException(LocalizedExceptionKeys.VIOLATION_NOT_FOUND, appealCreationDto.violationId()));
+
+        Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(violation.getParkingCheckLog().getLicencePlate());
+        if (vehicle.isEmpty() || !vehicle.get().isOwnedBy(user)) {
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND_PLATE, violation.getParkingCheckLog().getLicencePlate());
+        }
+
+        Appeal appeal = appealService.save(Mapper.mapAppealRequestToAppeal(appealCreationDto, violation, user));
+        AppealDto appealDto;
+        if (!appealCreationDto.evidence().isEmpty())
+            appealDto = new AppealDto(appeal,
+                    appealService.constructAppealEvidence(appeal, appealCreationDto.evidence()).stream().map(AppealEvidenceDto::new).toList());
+        else
+            appealDto = new AppealDto(appeal);
+        return ResponseEntity.ok(appealDto);
+    }
+
     @GetMapping(path = "/appeal")
     @PreAuthorize("hasAnyRole('USER', 'OFFICER', 'ADMIN')")
     public ResponseEntity<?> getAppeals() {
         User currentUser = authUtils.requireCurrentUser();
 
-        if (currentUser.getRole() != Role.USER)
-            return ResponseEntity.ok(appealService.findByOfficerId(currentUser.getId()).stream().map(AppealDto::new).toList());
+        List<Appeal> appeals = switch (currentUser.getRole()) {
+            case USER -> appealService.findByUserId(currentUser.getId());
+            case OFFICER -> appealService.findByOfficerId(currentUser.getId());
+            case ADMIN -> appealService.findAll();
+        };
 
-        return ResponseEntity.ok(appealService.findByUserId(currentUser.getId()).stream().map(AppealDto::new).toList());
+        return ResponseEntity.ok(appeals.stream().map(AppealDto::new).toList());
     }
 
     @PutMapping(path = "/appeal/resolve/{appealId}")
@@ -132,10 +169,10 @@ public class ViolationController {
     public ResponseEntity<?> resolveAppeal(@PathVariable Long appealId) {
         Optional<Appeal> appeal = appealService.findById(appealId);
         if (appeal.isEmpty()) {
-            return HttpUtils.produceNotFoundResponse("Appeal not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.APPEAL_NOT_FOUND, appealId);
         }
         if (appeal.get().getResolved()) {
-            return HttpUtils.produceConflictErrorResponse("Appeal already resolved");
+            throw new LocalizedConflictException(LocalizedExceptionKeys.APPEAL_ALREADY_RESOLVED);
         }
 
         appealService.approveAppeal(appeal.get());
@@ -148,10 +185,10 @@ public class ViolationController {
     public ResponseEntity<?> rejectAppeal(@PathVariable Long appealId) {
         Optional<Appeal> appeal = appealService.findById(appealId);
         if (appeal.isEmpty()) {
-            return HttpUtils.produceNotFoundResponse("Appeal not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.APPEAL_NOT_FOUND, appealId);
         }
         if (appeal.get().getResolved()) {
-            return HttpUtils.produceConflictErrorResponse("Appeal already resolved");
+            throw new LocalizedConflictException(LocalizedExceptionKeys.APPEAL_ALREADY_RESOLVED);
         }
 
         appealService.rejectAppeal(appeal.get());
@@ -216,7 +253,7 @@ public class ViolationController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteAppeal(@PathVariable Long id){
         if(!appealService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No appeal for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.APPEAL_NOT_FOUND, id);
         }
         appealService.deleteById(id);
         return HttpUtils.produceOkResponse();
@@ -226,7 +263,7 @@ public class ViolationController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteAppealEvidence(@PathVariable Long id){
         if(!appealEvidenceService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No appeal evidence for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.EVIDENCE_NOT_FOUND, id);
         }
         appealEvidenceService.deleteById(id);
         return HttpUtils.produceOkResponse();

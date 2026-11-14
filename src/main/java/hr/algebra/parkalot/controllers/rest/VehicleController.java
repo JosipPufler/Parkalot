@@ -1,10 +1,12 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
 import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.models.entities.Vehicle;
 import hr.algebra.parkalot.models.dtos.PermitArchiveDto;
 import hr.algebra.parkalot.models.dtos.VehicleDetailsDto;
 import hr.algebra.parkalot.models.dtos.VehicleDto;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.models.enums.Role;
 import hr.algebra.parkalot.services.utils.AuthUtils;
 import hr.algebra.parkalot.services.db.PermitArchiveService;
@@ -42,14 +44,14 @@ public class VehicleController {
 
     @GetMapping("/{licencePlate}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<?> getVehicle(@PathVariable String licencePlate) throws ParseException {
+    public ResponseEntity<?> getVehicle(@PathVariable String licencePlate) {
         Optional<Vehicle> vehicle = vehicleService.findByLicencePlate(licencePlate);
         if (vehicle.isPresent()
                 && vehicle.get().isOwnedBy(authUtils.requireCurrentUser())) {
             return ResponseEntity.ok(new VehicleDetailsDto(vehicle.get(),
                     permitArchiveService.findByLicencePlate(licencePlate).stream().map(PermitArchiveDto::new).toList()));
         }
-        return HttpUtils.produceNotFoundResponse("Vehicle not found");
+        throw new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND_PLATE, licencePlate);
     }
 
     @PostMapping()
@@ -70,7 +72,7 @@ public class VehicleController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteVehicle(@PathVariable Long id){
         if(!vehicleService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No vehicleDto for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND, id);
         }
         vehicleService.deleteById(id);
         return HttpUtils.produceOkResponse();

@@ -43,6 +43,20 @@ public final class Mapper {
                 .build();
     }
 
+    public static Appeal mapAppealRequestToAppeal(AdminAppealCreationDto appealCreationDto, Violation violation, User user){
+        return mapAppealRequestToAppeal(new AppealCreationDto(appealCreationDto), violation, user);
+    }
+
+    public static Household mapHouseholdDtoToEntity(HouseholdDto householdDto) {
+        return Household.builder()
+                .street(householdDto.street())
+                .houseNumber(householdDto.houseNumber())
+                .city(householdDto.city())
+                .postalCode(householdDto.postalCode())
+                .country(householdDto.country())
+                .build();
+    }
+
     public static User mapRegistrationFormToUser(RegistrationForm registrationForm){
         return User.builder()
                 .email(registrationForm.email())
@@ -59,6 +73,7 @@ public final class Mapper {
                 .model(vehicleDto.model())
                 .year(vehicleDto.year())
                 .licencePlate(vehicleDto.licencePlate())
+                .emissionClass(vehicleDto.emissionClass())
                 .build();
     }
 
@@ -76,6 +91,14 @@ public final class Mapper {
                 .areaPolygon(polygon)
                 .zone(areaDto.zone())
                 .name(areaDto.name())
+                .build();
+    }
+
+    public static PermitEligibilityRule mapPermitEligibilityRuleFromDto(EligibilityRuleDto eligibilityRuleDto) {
+        return PermitEligibilityRule.builder()
+                .requiresResidentAddress(eligibilityRuleDto.requiresResidentAddress())
+                .maxVehiclesPerHousehold(eligibilityRuleDto.maxVehiclesPerHousehold())
+                .minimumEmissionClass(eligibilityRuleDto.emissionClass())
                 .build();
     }
 }

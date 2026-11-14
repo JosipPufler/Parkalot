@@ -30,7 +30,7 @@ public class Permit {
     @NotNull
     LocalDateTime createdAt;
     LocalDateTime paymentTime;
-    @NotBlank
+    @Column(name = "paypal_id", nullable = true)
     String paypalId;
 
     @ManyToOne(optional = false)

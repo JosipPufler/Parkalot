@@ -1,48 +1,247 @@
 <!DOCTYPE html>
-<html lang="en"
+<html th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout.html}">
+
 <head>
-    <title>My Appeals</title>
+    <title th:text="#{nav.appeals}">My Appeals</title>
 </head>
+
 <body>
 <div layout:fragment="content">
     <div th:replace="~{fragments/nav :: navbar}"></div>
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h2 class="mb-2">My Appeals</h2>
+            <h2 class="mb-2" th:text="#{nav.appeals}">My Appeals</h2>
 
-            <div class="btn-group mb-2" role="group" aria-label="Filter appeals">
+            <div class="d-flex align-items-center flex-wrap mb-2">
                 <button type="button"
-                        class="btn btn-primary active"
-                        data-appeal-filter="all">
-                    All
+                        id="create-appeal"
+                        class="btn btn-success mr-3 mb-2"
+                        th:if="${userRole == 'ADMIN'}" th:text="#{appeals.create}">
+                    <i class="bi bi-plus-lg"></i> Create Appeal
                 </button>
-                <button type="button"
-                        class="btn btn-outline-primary"
-                        data-appeal-filter="active">
-                    Active
-                </button>
-                <button type="button"
-                        class="btn btn-outline-primary"
-                        data-appeal-filter="inactive">
-                    Inactive
-                </button>
+
+                <div class="btn-group mb-2" role="group" aria-label="Filter appeals">
+                    <button type="button"
+                            class="btn btn-primary active"
+                            data-appeal-filter="all" th:text="#{appeals.all}">
+                        All
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            data-appeal-filter="active" th:text="#{appeals.active}">
+                        Active
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            data-appeal-filter="inactive" th:text="#{appeals.inactive}">
+                        Inactive
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div id="appeals-status" class="text-muted mb-3">
+        <div id="appeals-status" class="text-muted mb-3" th:text="#{appeals.loading}">
             Loading appeals...
         </div>
 
-        <div id="appeals-container" th:attr="data-user-role=${userRole}"></div>
+        <div id="appeals-container"
+             th:attr="data-user-role=${userRole}">
+        </div>
     </div>
+
+    <!-- Create / Edit Appeal Modal -->
+    <div class="modal fade" id="appeal-modal" tabindex="-1"
+         role="dialog" aria-labelledby="appeal-modal-title"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <form id="appeal-admin-form">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="appeal-modal-title" th:text="#{appeals.create}">
+                            Create Appeal
+                        </h5>
+
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <input type="hidden" id="appeal-id">
+
+                        <div class="form-group">
+                            <label for="appeal-title" th:text="#{appeals.title}">Title</label>
+                            <input type="text" id="appeal-title"
+                                   class="form-control" required
+                                   maxlength="255">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="appeal-description" th:text="#{appeals.description}">Description</label>
+                            <textarea id="appeal-description"
+                                      class="form-control"
+                                      rows="4" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="appeal-violation" th:text="#{appeals.violation}">Violation</label>
+                            <select id="appeal-violation"
+                                    class="form-control" required>
+                                <option value="" th:text="#{appeals.violation.select}">Select a violation</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="appeal-owner-group">
+                            <label for="appeal-owner" th:text="#{appeals.vehicle}">Vehicle owner</label>
+                            <select id="appeal-owner"
+                                    class="form-control" required disabled>
+                                <option value="" th:text="#{appeals.violation.select.first}">Select a violation first</option>
+                            </select>
+                            <small class="form-text text-muted" th:text="#{appeals.vehicle.info}">
+                                Only owners of the selected violation's vehicle
+                                can be assigned this appeal.
+                            </small>
+                        </div>
+
+                        <div class="form-group" id="appeal-evidence-group">
+                            <label for="appeal-evidence" th:text="#{appeals.evidence}">Evidence</label>
+                            <input type="file" id="appeal-evidence"
+                                   class="form-control-file" multiple>
+                            <small class="form-text text-muted" th:text="#{appeals.evidence.info}">
+                                You can select multiple evidence files.
+                            </small>
+                        </div>
+
+                        <!-- Edit-only fields -->
+                        <div id="appeal-edit-fields" style="display: none;">
+
+                            <div class="form-group">
+                                <label for="appeal-deadline" th:text="#{appeals.deadline}">Deadline</label>
+                                <input type="date" id="appeal-deadline"
+                                       class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="appeal-issued-at" th:text="#{appeals.issuedAt}">Issued at</label>
+                                <input type="datetime-local" id="appeal-issued-at"
+                                       class="form-control">
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox" id="appeal-resolved"
+                                       class="form-check-input">
+                                <label class="form-check-label"
+                                       for="appeal-resolved" th:text="#{appeals.resolved}">
+                                    Resolved
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <div id="appeal-form-status"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal" th:text="#{cancel}">
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="btn btn-primary"
+                                id="save-appeal" th:text="#{appeals.create}">
+                            Create Appeal
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="delete-appeal-modal" tabindex="-1"
+         role="dialog" aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" th:text="#{appeals.delete}">Delete Appeal</h5>
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body" id="delete-appeal-message" th:text="#{appeals.delete.confirm}">
+                    Are you sure you want to delete this appeal?
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal" th:text="#{cancel}">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-danger"
+                            id="confirm-delete-appeal" th:text="#{delete}">
+                        Delete
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve / Reject Confirmation Modal -->
+    <div class="modal fade" id="resolveAppealModal" tabindex="-1"
+         role="dialog" aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resolveAppealModalTitle" th:text="#{appeals.resolve}">
+                        Resolve appeal
+                    </h5>
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body" id="resolveAppealModalBody"></div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal" th:text="#{cancel}">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-success"
+                            id="confirmResolveAppeal" th:text="#{confirm}">
+                        Confirm
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <th:block layout:fragment="pageScripts">
     <script th:src="@{/js/appeals.js}"></script>
 </th:block>
+
 </body>
 </html>

@@ -1,16 +1,15 @@
 package hr.algebra.parkalot.services.db;
 
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
 import hr.algebra.parkalot.models.dtos.PermitUpdateForm;
-import hr.algebra.parkalot.models.entities.Area;
-import hr.algebra.parkalot.models.entities.Permit;
-import hr.algebra.parkalot.models.entities.PermitArchive;
-import hr.algebra.parkalot.models.entities.Vehicle;
+import hr.algebra.parkalot.models.entities.*;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.repositories.PermitRepo;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,17 +43,23 @@ public class PermitService extends GeneralCrudService<Permit, PermitRepo> {
 
     public Permit updatePermit(PermitUpdateForm permitDto) {
         Permit permit = findById(permitDto.id()).orElseThrow(() ->
-                new EntityNotFoundException("Permit with ID: " + permitDto.id() + " not found"));
+                new LocalizedNotFoundException(LocalizedExceptionKeys.PERMIT_NOT_FOUND, permitDto.id()));
         Area area = areaService.findById(permitDto.areaId()).orElseThrow(() ->
-                new EntityNotFoundException("Area with ID: " + permitDto.areaId() + " not found"));
+                new LocalizedNotFoundException(LocalizedExceptionKeys.AREA_NOT_FOUND, permitDto.areaId()));
         Vehicle vehicle = vehicleService.findById(permitDto.vehicleId()).orElseThrow(() ->
-                new EntityNotFoundException("Vehicle with ID: " + permitDto.vehicleId() + " not found"));
+                new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND, permitDto.vehicleId()));
 
         permit.setPermitDuration(permitDto.permitDuration());
         permit.setStartDate(permitDto.startDate());
         permit.setArea(area);
         permit.setVehicle(vehicle);
+        User buyer = vehicle.getOwners().stream()
+                .min(Comparator.comparing(User::getId))
+                .orElseThrow(() ->
+                        new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NO_OWNERS));
 
+        permit.setBuyer(buyer);
+        
         return repository.save(permit);
     }
 

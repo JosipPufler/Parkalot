@@ -5,25 +5,50 @@
             <div class="collapse navbar-collapse justify-content-between" id="navbarContent">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/mvc/map}">Map</a>
+                        <a class="nav-link" th:href="@{/mvc/map}" th:text="#{nav.map}">Map</a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" th:href="@{/mvc/areas}">Areas</a>
+                        <a class="nav-link" th:href="@{/mvc/areas}" th:text="#{nav.areas}">Areas</a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" th:href="@{/mvc/admin/vehicles}">Vehicles</a>
+                        <a class="nav-link" th:href="@{/mvc/admin/vehicles}" th:text="#{nav.vehicles}">Vehicles</a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" th:href="@{/mvc/admin/users}">Users</a>
+                        <a class="nav-link" th:href="@{/mvc/admin/users}" th:text="#{nav.users}">Users</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/mvc/permits}">Permits</a>
+                        <a class="nav-link" th:href="@{/mvc/permits}" th:text="#{nav.permits}">Permits</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/mvc/violations}">Violations</a>
+                        <a class="nav-link" th:href="@{/mvc/violations}" th:text="#{nav.violations}">Violations</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/mvc/appeals}">Appeals</a>
+                        <a class="nav-link" th:href="@{/mvc/appeals}" th:text="#{nav.appeals}">Appeals</a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav position-relative">
+                    <li>
+                        <div class="dropdown">
+                            <button class="btn dropdown-toggle"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                <span th:text="${#locale.language == 'hr' ? '🇭🇷 HR' : '🇬🇧 EN'}">
+                                    EN
+                                </span>
+                            </button>
+
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="?lang=en">
+                                    🇬🇧 English
+                                </a>
+
+                                <a class="dropdown-item" href="?lang=hr">
+                                    🇭🇷 Hrvatski
+                                </a>
+                            </div>
+                        </div>
                     </li>
                 </ul>
             </div>

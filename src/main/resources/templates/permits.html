@@ -1,29 +1,51 @@
+
 <!DOCTYPE html>
-<html lang="en"
+<html th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout.html}" xmlns:sec="http://www.w3.org/1999/xhtml">
+      xmlns:sec="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layout.html}">
+
 <head>
-    <title>My Permits</title>
+    <title th:text="#{nav.permits}">My Permits</title>
 </head>
+
 <body>
 <div layout:fragment="content">
+
     <div th:replace="~{fragments/nav :: navbar}"></div>
 
-    <span id="admin-flag" sec:authorize="hasRole('ADMIN')" hidden></span>
+    <span id="admin-flag"
+          sec:authorize="hasRole('ADMIN')"
+          hidden></span>
 
     <div class="container py-4">
-        <h2 class="mb-4">My Permits</h2>
 
-        <div id="permits-status" class="text-muted mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0" th:text="#{nav.permits}">My Permits</h2>
+
+            <button type="button"
+                    id="create-permit"
+                    class="btn btn-primary"
+                    sec:authorize="hasRole('ADMIN')">
+                <i class="bi bi-plus-lg"></i>
+                <span th:text="#{permits.create}">Create Permit</span>
+            </button>
+        </div>
+
+        <div id="permits-status"
+             class="text-muted mb-3">
             Loading permits...
         </div>
 
         <div id="permits-container"></div>
     </div>
 
-    <div class="modal fade" id="update-permit-modal"
-         tabindex="-1" role="dialog"
+    <!-- Create / Update Permit Modal -->
+    <div class="modal fade"
+         id="update-permit-modal"
+         tabindex="-1"
+         role="dialog"
          aria-labelledby="update-permit-title"
          aria-hidden="true">
 
@@ -31,63 +53,123 @@
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title" id="update-permit-title">
+                    <h5 class="modal-title"
+                        id="update-permit-title"
+                        th:text="#{permits.update}">
                         Update Permit
                     </h5>
 
-                    <button type="button" class="close"
-                            data-dismiss="modal" aria-label="Close">
+                    <button type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
 
                 <div class="modal-body">
                     <form id="update-permit-form">
+
                         <input type="hidden" id="update-permit-id">
 
                         <div class="form-group">
-                            <label for="update-start-date">Start date</label>
-                            <input type="date" class="form-control"
-                                   id="update-start-date" required>
+                            <label for="update-start-date"
+                                   th:text="#{permits.startDate}">
+                                Start date
+                            </label>
+
+                            <input type="date"
+                                   class="form-control"
+                                   id="update-start-date"
+                                   required>
                         </div>
 
                         <div class="form-group">
-                            <label for="update-duration">Duration</label>
-                            <select class="form-control select2" id="update-duration" required>
-                                <option value="DAY">Day</option>
-                                <option value="WEEK">Week</option>
-                                <option value="MONTH">Month</option>
-                                <option value="YEAR">Year</option>
+                            <label for="update-duration"
+                                   th:text="#{permits.duration}">
+                                Duration
+                            </label>
+
+                            <select class="form-control select2"
+                                    id="update-duration"
+                                    required>
+                                <option value="DAY"
+                                        th:text="#{permits.duration.day}">
+                                    Day
+                                </option>
+
+                                <option value="WEEK"
+                                        th:text="#{permits.duration.week}">
+                                    Week
+                                </option>
+
+                                <option value="MONTH"
+                                        th:text="#{permits.duration.month}">
+                                    Month
+                                </option>
+
+                                <option value="YEAR"
+                                        th:text="#{permits.duration.year}">
+                                    Year
+                                </option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="update-area">Area</label>
-                            <select class="form-control select2" id="update-area" required></select>
+                            <label for="update-area"
+                                   th:text="#{permits.area}">
+                                Area
+                            </label>
+
+                            <select class="form-control select2"
+                                    id="update-area"
+                                    required>
+                            </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="update-vehicle">Vehicle</label>
-                            <select class="form-control select2" id="update-vehicle" required></select>
+                            <label for="update-vehicle"
+                                   th:text="#{permits.vehicle}">
+                                Vehicle
+                            </label>
+
+                            <select class="form-control select2"
+                                    id="update-vehicle"
+                                    required>
+                            </select>
                         </div>
+
                     </form>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">Cancel</button>
 
-                    <button type="submit" form="update-permit-form"
-                            class="btn btn-primary">Save changes</button>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal"
+                            th:text="#{permits.cancel}">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            id="permit-submit-button"
+                            form="update-permit-form"
+                            class="btn btn-primary"
+                            th:text="#{permits.save}">
+                        Save changes
+                    </button>
+
                 </div>
 
             </div>
         </div>
     </div>
+
 </div>
 
 <th:block layout:fragment="pageScripts">
     <script th:src="@{/js/permits.js}"></script>
 </th:block>
+
 </body>
 </html>

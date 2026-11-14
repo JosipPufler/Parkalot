@@ -1,7 +1,9 @@
 package hr.algebra.parkalot.controllers.rest;
 
 
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
 import hr.algebra.parkalot.models.dtos.UserDto;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.services.db.UserService;
 import hr.algebra.parkalot.services.utils.HttpUtils;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +34,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         if(!userService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No user for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.USER_NOT_FOUND, id);
         }
         userService.deleteById(id);
         return HttpUtils.produceOkResponse();

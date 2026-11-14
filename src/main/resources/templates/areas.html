@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en"
+<html th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout.html}">
 
 <head>
-    <title>Manage Areas</title>
+    <title th:text="#{areas.select}">Manage Parking Areas</title>
 </head>
 
 <body>
@@ -13,21 +13,21 @@
     <div th:replace="~{fragments/nav :: navbar}"></div>
 
     <div class="container-fluid py-4">
-        <h2 class="mb-4">Manage Parking Areas</h2>
+        <h2 class="mb-4" th:text="#{areas.manage}">Manage Parking Areas</h2>
 
         <div class="row">
             <!-- Area form -->
             <div class="col-lg-4 mb-3">
                 <div class="card">
                     <div class="card-header">
-                        <strong>Area details</strong>
+                        <strong th:text="#{areas.details}">Area details</strong>
                     </div>
 
                     <div class="card-body">
                         <div class="form-group">
-                            <label for="area-select">Existing areas</label>
+                            <label for="area-select" th:text="#{areas.existing}">Existing areas</label>
                             <select id="area-select" class="form-control select2">
-                                <option value="">Select an area...</option>
+                                <option value="" th:text="#{areas.select}">Select an area...</option>
                             </select>
                         </div>
 
@@ -44,18 +44,18 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="area-zone">Zone</label>
+                                <label for="area-zone" th:text="#{map.admin.area.zone}">Zone</label>
                                 <select id="area-zone" class="form-control select2" required>
-                                    <option value="">Select a zone...</option>
-                                    <option value="ZONE_1">Zone I</option>
-                                    <option value="ZONE_2">Zone II</option>
-                                    <option value="ZONE_3">Zone III</option>
+                                    <option value="" th:text="#{map.admin.area.zone.select}">Select a zone...</option>
+                                    <option value="ZONE_1" th:text="#{map.admin.area.zone.1}">Zone I</option>
+                                    <option value="ZONE_2" th:text="#{map.admin.area.zone.2}">Zone II</option>
+                                    <option value="ZONE_3" th:text="#{map.admin.area.zone.3}">Zone III</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label>Coordinates</label>
-                                <p class="text-muted small mb-2">
+                                <p class="text-muted small mb-2" th:text="#{areas.info}">
                                     Click the map to add points. Drag markers to move them.
                                     Use the remove buttons to delete individual points.
                                 </p>
@@ -70,18 +70,21 @@
                             </div>
 
                             <button type="submit" id="save-area"
-                                    class="btn btn-primary btn-block">
+                                    class="btn btn-primary btn-block"
+                                    th:text="#{map.admin.area.create}">
                                 Create area
                             </button>
 
                             <button type="button" id="delete-area"
                                     class="btn btn-danger btn-block"
-                                    disabled>
+                                    disabled
+                                    th:text="#{areas.delete}">
                                 Delete area
                             </button>
 
                             <button type="button" id="new-area"
-                                    class="btn btn-outline-secondary btn-block">
+                                    class="btn btn-outline-secondary btn-block"
+                                    th:text="#{map.admin.area.vertex.clear}">
                                 Clear / New area
                             </button>
                         </form>
@@ -94,7 +97,7 @@
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between">
                         <strong>Area map</strong>
-                        <span id="map-status" class="text-muted small">
+                        <span id="map-status" class="text-muted small" th:text="#{map.loading}">
                             Loading areas...
                         </span>
                     </div>

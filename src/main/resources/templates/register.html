@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" lang="en"
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" th:lang="${#locale.language}"
       layout:decorate="~{layout.html}">
 <head>
   <meta charset="UTF-8" />
@@ -11,45 +11,76 @@
   <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <h2 class="text-center mb-4">Register</h2>
+        <h2 class="text-center mb-4" th:text="#{register}">Register</h2>
         <form th:action="@{/mvc/public/auth/register}" method="post" th:object="${registrationForm}">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
           <div class="mb-3">
-            <label for="firstName" class="form-label">First name</label>
+            <label for="firstName" class="form-label" th:text="#{register.firstName}">First name</label>
             <input th:field="*{firstName}" type="text" class="form-control" id="firstName" required />
             <div th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" class="text-danger"></div>
           </div>
 
           <div class="mb-3">
-            <label for="lastName" class="form-label">Last name</label>
+            <label for="lastName" class="form-label" th:text="#{register.lastName}">Last name</label>
             <input th:field="*{lastName}" type="text" class="form-control" id="lastName" />
             <div th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" class="text-danger"></div>
           </div>
 
           <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
+            <label for="password" class="form-label" th:text="#{login.password}">Password</label>
             <input th:field="*{password}" type="password" class="form-control" id="password" required />
             <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-danger"></div>
           </div>
 
           <div class="mb-3">
-            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <label for="confirmPassword" class="form-label" th:text="#{register.confirmPassword}">Confirm Password</label>
             <input th:field="*{confirmPassword}" type="password" class="form-control" id="confirmPassword" required />
             <div th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="text-danger"></div>
           </div>
 
           <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
+            <label for="email" class="form-label" th:text="#{login.email}">Email</label>
             <input th:field="*{email}" type="email" class="form-control" id="email" required />
             <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-danger"></div>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100">Register</button>
+          <div class="mb-3">
+            <label for="street" class="form-label" th:text="#{household.street}">Street</label>
+            <input th:field="*{household.street}" type="text" class="form-control" id="street" />
+            <div th:if="${#fields.hasErrors('household.street')}" th:errors="*{household.street}" class="text-danger"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="houseNumber" class="form-label" th:text="#{household.houseNumber}">House number</label>
+            <input th:field="*{household.houseNumber}" type="text" class="form-control" id="houseNumber" />
+            <div th:if="${#fields.hasErrors('household.houseNumber')}" th:errors="*{household.houseNumber}" class="text-danger"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="city" class="form-label" th:text="#{household.city}">City</label>
+            <input th:field="*{household.city}" type="text" class="form-control" id="city" />
+            <div th:if="${#fields.hasErrors('household.city')}" th:errors="*{household.city}" class="text-danger"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="postalCode" class="form-label" th:text="#{household.postalCode}">Postal code</label>
+            <input th:field="*{household.postalCode}" type="text" class="form-control" id="postalCode" />
+            <div th:if="${#fields.hasErrors('household.postalCode')}" th:errors="*{household.postalCode}" class="text-danger"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="country" class="form-label" th:text="#{household.country}">Country</label>
+            <input th:field="*{household.country}" type="text" class="form-control" id="country" />
+            <div th:if="${#fields.hasErrors('household.country')}" th:errors="*{household.country}" class="text-danger"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100" th:text="#{register.button}">Register</button>
         </form>
 
         <div class="mt-3 text-center">
-          Already have an account? <a th:href="@{/mvc/public/auth/login}">Login here</a>
+          <p th:text="#{register.haveAccount}">Already have an account?</p>
+          <a th:href="@{/mvc/public/auth/login}" th:text="#{register.login}">Login here</a>
         </div>
       </div>
     </div>

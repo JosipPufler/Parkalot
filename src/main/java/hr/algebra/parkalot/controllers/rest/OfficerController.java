@@ -1,7 +1,9 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.exceptions.LocalizedBadRequestException;
 import hr.algebra.parkalot.models.dtos.*;
 import hr.algebra.parkalot.models.entities.*;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.services.*;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.db.ParkingCheckLogService;
@@ -45,7 +47,7 @@ public class OfficerController {
         ).orElse(null);
 
         if (currentArea == null) {
-            return HttpUtils.produceBadRequestResponse("Vehicle not in any zone");
+            throw new LocalizedBadRequestException(LocalizedExceptionKeys.VEHICLE_NOT_IN_AREA);
         }
 
         String licencePlate = aiService.readLicencePlate(image);

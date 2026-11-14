@@ -1,5 +1,6 @@
 package hr.algebra.parkalot.models.entities;
 
+import hr.algebra.parkalot.models.enums.EmissionClass;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,9 @@ public class Vehicle {
     @NotBlank
     @Column(unique = true)
     private String licencePlate;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private EmissionClass emissionClass;
 
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

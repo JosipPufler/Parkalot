@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout.html}"
-      lang="en">
+      th:lang="${#locale.language}">
 
 <head>
     <title>Parking Areas</title>
@@ -27,15 +27,12 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h1 class="h3 mb-1">Parking Areas</h1>
-                <p class="text-muted mb-0">
-                    Explore permit zones and their requirements.
-                </p>
+                <h1 class="h3 mb-1" th:text="#{map.parkingAreas}">Parking Areas</h1>
             </div>
 
-            <span class="badge text-bg-primary" id="area-count">
-            Loading areas...
-        </span>
+            <span class="badge text-bg-primary" id="area-count" th:text="#{map.loading}">
+                Loading areas...
+            </span>
         </div>
 
         <div class="map-wrapper">
@@ -44,26 +41,26 @@
             <div class="map-panel">
                 <div class="card shadow mb-3">
                     <div class="card-body">
-                        <h2 class="h6">Map controls</h2>
+                        <h2 class="h6" th:text="#{map.controls}">Map controls</h2>
 
+                        <label for="area-search" th:text="#{map.admin.area.name.search}">Search area</label>
                         <input type="search"
                                id="area-search"
-                               class="form-control mb-3"
-                               placeholder="Search parking areas...">
+                               class="form-control mb-3">
 
                         <div class="form-check">
                             <input class="form-check-input"
                                    type="checkbox"
                                    id="show-areas"
                                    checked>
-                            <label class="form-check-label" for="show-areas">
-                                Show permit zones
+                            <label class="form-check-label" for="show-areas" th:text="#{map.admin.area.show}">
+                                Show permit areas
                             </label>
                         </div>
 
                         <hr>
 
-                        <div class="small">
+                        <div class="small" th:text="#{map.admin.area.zone}">
                 <span class="d-inline-block rounded me-2"
                       style="width: 12px; height: 12px;
                              background: #0d6efd"></span>
@@ -72,7 +69,7 @@
 
                         <div id="map-status"
                              class="small text-muted mt-3"
-                             role="status">
+                             role="status" th:text="#{map.loading}">
                             Loading map data...
                         </div>
                     </div>
@@ -82,69 +79,137 @@
                 <div sec:authorize="hasRole('ADMIN')"
                      class="card shadow">
                     <div class="card-body">
-                        <h2 class="h6">Create parking area</h2>
-                        <p class="small text-muted">
+                        <h2 class="h6" th:text="#{map.admin.area.create}">Create parking area</h2>
+                        <p class="small text-muted" th:text="#{map.admin.area.info}">
                             Start drawing, then click the map to add polygon vertices.
                         </p>
 
                         <div class="mb-3">
-                            <label for="new-area-name" class="form-label">
+                            <label for="new-area-name" class="form-label" th:text="#{map.admin.area.name}">
                                 Area name
                             </label>
                             <input id="new-area-name"
                                    type="text"
                                    class="form-control"
                                    maxlength="100"
-                                   required
-                                   placeholder="e.g. City Centre">
+                                   required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="new-area-zone" class="form-label">
+                            <label for="new-area-zone" class="form-label" th:text="#{map.admin.area.zone}">
                                 Permit zone
                             </label>
                             <select id="new-area-zone"
                                     class="custom-select"
                                     required>
-                                <option value="" selected disabled>
+                                <option value="" selected disabled th:text="#{map.admin.area.zone.select}">
                                     Select a zone
                                 </option>
-                                <option value="ZONE_1">ZONE I</option>
-                                <option value="ZONE_2">ZONE II</option>
-                                <option value="ZONE_3">ZONE III</option>
+                                <option value="ZONE_1" th:text="#{map.admin.area.zone.1}">ZONE I</option>
+                                <option value="ZONE_2" th:text="#{map.admin.area.zone.2}">ZONE II</option>
+                                <option value="ZONE_3" th:text="#{map.admin.area.zone.3}">ZONE III</option>
                             </select>
                         </div>
 
+
+                        <div class="border rounded p-3 mb-3">
+                            <h3 class="h6" th:text="#{map.admin.area.eligibility}">
+                                Permit eligibility requirements
+                            </h3>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox"
+                                       id="requires-resident-address"
+                                       class="form-check-input">
+
+                                <label for="requires-resident-address"
+                                       class="form-check-label"
+                                       th:text="#{map.admin.area.requiresResidentAddress}">
+                                    Requires resident address
+                                </label>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="max-vehicles-per-household"
+                                       class="form-label"
+                                       th:text="#{map.admin.area.maxVehicles}">
+                                    Maximum vehicles per household
+                                </label>
+
+                                <input type="number"
+                                       id="max-vehicles-per-household"
+                                       class="form-control"
+                                       min="1"
+                                       step="1"
+                                       placeholder="No limit">
+
+                                <small class="form-text text-muted"
+                                       th:text="#{map.admin.area.maxVehiclesInfo}">
+                                    Leave empty for no limit.
+                                </small>
+                            </div>
+
+                            <div class="mb-2">
+                                <label for="minimum-emission-class"
+                                       class="form-label"
+                                       th:text="#{map.admin.area.minimumEmissionClass}">
+                                    Minimum emission class
+                                </label>
+
+                                <select id="minimum-emission-class"
+                                        class="form-select">
+                                    <option value=""
+                                            selected
+                                            th:text="#{common.selectOption}">
+                                        No requirement
+                                    </option>
+
+                                    <option value="EURO_1">Euro 1</option>
+                                    <option value="EURO_2">Euro 2</option>
+                                    <option value="EURO_3">Euro 3</option>
+                                    <option value="EURO_4">Euro 4</option>
+                                    <option value="EURO_5">Euro 5</option>
+                                    <option value="EURO_6">Euro 6</option>
+                                    <option value="EURO_7">Euro 7</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="small text-muted mb-3" id="drawing-status"
-                             role="status">
+                             role="status"
+                             th:text="#{map.admin.area.vertex.none}">
                             No vertices selected.
                         </div>
 
                         <div class="drawing-buttons">
                             <button type="button"
                                     id="start-drawing"
-                                    class="btn btn-outline-primary btn-sm">
+                                    class="btn btn-outline-primary btn-sm"
+                                    th:text="#{map.admin.area.vertex.start}">
                                 Start drawing
                             </button>
 
                             <button type="button"
                                     id="clear-drawing"
                                     class="btn btn-outline-secondary btn-sm"
-                                    disabled>
+                                    disabled
+                                    th:text="#{map.admin.area.vertex.clear}">
                                 Clear
                             </button>
 
                             <button type="button"
                                     id="undo-vertex"
                                     class="btn btn-outline-secondary btn-sm"
-                                    disabled>
+                                    disabled
+                                    th:text="#{map.admin.area.vertex.undo}">
                                 Undo vertex
                             </button>
 
                             <button type="button"
                                     id="save-area"
                                     class="btn btn-primary btn-sm"
-                                    disabled>
+                                    disabled
+                                    th:text="#{map.admin.area.vertex.save}">
                                 Save area
                             </button>
                         </div>
@@ -154,12 +219,12 @@
 
                 <div class="card mt-3">
                     <div class="card-body text-center">
-                        <h3 class="h6 card-title">Licence plate scanner</h3>
-                        <p class="text-muted small">
+                        <h3 class="h6 card-title" th:text="#{map.officer.scan}">Licence plate scanner</h3>
+                        <p class="text-muted small" th:text="#{map.officer.scan.info}">
                             Select a location and upload an image to identify a licence plate.
                         </p>
                         <button type="button" class="btn btn-outline-primary btn-block"
-                                id="start-plate-scan">
+                                id="start-plate-scan" th:text="#{map.officer.scan}">
                             <i class="bi bi-camera"></i> Scan licence plate
                         </button>
                     </div>
@@ -174,7 +239,8 @@
                 id="vehicle-sidebar-toggle"
                 class="btn btn-primary vehicle-sidebar-toggle"
                 aria-controls="vehicle-sidebar"
-                aria-expanded="false">
+                aria-expanded="false"
+                th:text="#{nav.vehicles}">
             <span id="vehicle-toggle-icon">›</span>
             My vehicles
         </button>
@@ -186,7 +252,7 @@
                aria-hidden="true">
 
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">My vehicles</h2>
+                <h2 class="h5 mb-0" th:text="#{nav.vehicles}">My vehicles</h2>
 
                 <button type="button"
                         class="close"
@@ -197,7 +263,7 @@
             </div>
 
             <div id="vehicle-list">
-                <p class="text-muted small">
+                <p class="text-muted small" th:text="#{map.vehicle.info}">
                     Your registered vehicles will appear here.
                 </p>
             </div>
@@ -205,7 +271,8 @@
             <button type="button"
                     class="btn btn-primary w-100 mt-2"
                     data-bs-toggle="modal"
-                    data-bs-target="#register-vehicle-modal">
+                    data-bs-target="#register-vehicle-modal"
+                    th:text="#{map.vehicle.register}">
                 Register vehicle
             </button>
         </aside>
@@ -223,7 +290,7 @@
                     <form id="register-vehicle-form">
                         <div class="modal-header">
                             <h2 class="modal-title fs-5"
-                                id="register-vehicle-title">
+                                id="register-vehicle-title" th:text="#{vehicle.make}">
                                 Register a vehicle
                             </h2>
 
@@ -238,29 +305,55 @@
 
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label for="vehicle-make" class="form-label">Make</label>
+                                <label for="vehicle-make" class="form-label" th:text="#{vehicle.make}">Make</label>
                                 <input type="text" id="vehicle-make" class="form-control"
                                        maxlength="100" required>
                             </div>
 
                             <div class="mb-3">
-                                <label for="vehicle-model" class="form-label">Model</label>
+                                <label for="vehicle-model" class="form-label" th:text="#{vehicle.model}">Model</label>
                                 <input type="text" id="vehicle-model" class="form-control"
                                        maxlength="100" required>
                             </div>
 
                             <div class="mb-3">
-                                <label for="vehicle-year" class="form-label">Year</label>
+                                <label for="vehicle-year" class="form-label" th:text="#{vehicle.year}">Year</label>
                                 <input type="number" id="vehicle-year" class="form-control"
                                        min="1886" max="2100" required>
                             </div>
 
                             <div class="mb-3">
-                                <label for="vehicle-licence-plate" class="form-label">
+                                <label for="vehicle-licence-plate" class="form-label" th:text="#{vehicle.licensePlate}">
                                     Licence plate
                                 </label>
                                 <input type="text" id="vehicle-licence-plate"
                                        class="form-control" maxlength="20" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="vehicle-emission-class"
+                                       th:text="#{vehicle.emissionClass}">
+                                    Emission class
+                                </label>
+
+                                <select id="vehicle-emission-class"
+                                        class="form-select"
+                                        required>
+                                    <option value=""
+                                            selected
+                                            disabled
+                                            th:text="#{vehicle.emissionClass.select}">
+                                        Select emission class
+                                    </option>
+
+                                    <option value="EURO_1">Euro 1</option>
+                                    <option value="EURO_2">Euro 2</option>
+                                    <option value="EURO_3">Euro 3</option>
+                                    <option value="EURO_4">Euro 4</option>
+                                    <option value="EURO_5">Euro 5</option>
+                                    <option value="EURO_6">Euro 6</option>
+                                    <option value="EURO_7">Euro 7</option>
+                                </select>
                             </div>
 
                             <div id="vehicle-form-status" class="small" role="status"></div>
@@ -269,12 +362,13 @@
                         <div class="modal-footer">
                             <button type="button"
                                     class="btn btn-outline-secondary"
-                                    data-bs-dismiss="modal">
+                                    data-bs-dismiss="modal" th:text="#{map.close}">
+                                Close
                             </button>
 
                             <button type="submit"
                                     id="save-vehicle"
-                                    class="btn btn-primary">
+                                    class="btn btn-primary" th:text="#{vehicle.register}">
                                 Register vehicle
                             </button>
                         </div>

@@ -1,5 +1,15 @@
+
 $(document).ready(function () {
     const map = L.map("area-map").setView([45, 15], 5);
+
+    const t = window.i18n.areas;
+    const eligibilityT = window.i18n?.map?.admin?.area || {};
+
+    const locale = document.documentElement.lang === "hr"
+        ? "hr-HR"
+        : "en-GB";
+
+    const pluralRules = new Intl.PluralRules(locale);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors"
@@ -21,6 +31,132 @@ $(document).ready(function () {
         ZONE_2: "#fd7e14",
         ZONE_3: "#198754"
     };
+
+    function translate(template, values = {}) {
+        return template.replace(/\{(\w+)\}/g, function (match, key) {
+            return values[key] ?? match;
+        });
+    }
+
+    function getCountText(count, type) {
+        const category = pluralRules.select(count);
+        const key = `${type}Count${category.charAt(0).toUpperCase()}${category.slice(1)}`;
+
+        return translate(t[key] || t[`${type}CountOther`], { count });
+    }
+
+    function formatZone(zone) {
+        const zones = {
+            ZONE_1: t.zone1,
+            ZONE_2: t.zone2,
+            ZONE_3: t.zone3
+        };
+
+        return zones[zone] || zone || t.notAvailable;
+    }
+
+    // Add eligibility controls to the form.
+    // This keeps the existing HTML template compatible.
+    function createEligibilityControls() {
+        if ($("#requires-resident-address").length) {
+            return;
+        }
+
+        const section = $("<div>")
+            .addClass("border rounded p-3 mb-3");
+
+        $("<h6>")
+            .addClass("mb-3")
+            .text(eligibilityT.eligibility || "Permit eligibility requirements")
+            .appendTo(section);
+
+        const addressGroup = $("<div>")
+            .addClass("form-check mb-3");
+
+        $("<input>")
+            .attr({
+                type: "checkbox",
+                id: "requires-resident-address"
+            })
+            .addClass("form-check-input")
+            .appendTo(addressGroup);
+
+        $("<label>")
+            .attr("for", "requires-resident-address")
+            .addClass("form-check-label")
+            .text(
+                eligibilityT.requiresResidentAddress ||
+                "Requires resident address"
+            )
+            .appendTo(addressGroup);
+
+        section.append(addressGroup);
+
+        const vehiclesGroup = $("<div>")
+            .addClass("form-group");
+
+        $("<label>")
+            .attr("for", "max-vehicles-per-household")
+            .text(
+                eligibilityT.maxVehicles ||
+                "Maximum vehicles per household"
+            )
+            .appendTo(vehiclesGroup);
+
+        $("<input>")
+            .attr({
+                type: "number",
+                id: "max-vehicles-per-household",
+                min: 1,
+                step: 1
+            })
+            .addClass("form-control")
+            .appendTo(vehiclesGroup);
+
+        $("<small>")
+            .addClass("form-text text-muted")
+            .text(
+                eligibilityT.maxVehiclesInfo ||
+                "Leave empty for no limit."
+            )
+            .appendTo(vehiclesGroup);
+
+        section.append(vehiclesGroup);
+
+        const emissionGroup = $("<div>")
+            .addClass("form-group mb-0");
+
+        $("<label>")
+            .attr("for", "minimum-emission-class")
+            .text(
+                eligibilityT.minimumEmissionClass ||
+                "Minimum emission class"
+            )
+            .appendTo(emissionGroup);
+
+        const emissionSelect = $("<select>")
+            .attr("id", "minimum-emission-class")
+            .addClass("form-control");
+
+        $("<option>")
+            .val("")
+            .text("—")
+            .appendTo(emissionSelect);
+
+        for (let i = 1; i <= 7; i++) {
+            $("<option>")
+                .val(`EURO_${i}`)
+                .text(`Euro ${i}`)
+                .appendTo(emissionSelect);
+        }
+
+        emissionGroup.append(emissionSelect);
+        section.append(emissionGroup);
+
+        $("#area-zone").closest(".form-group").after(section);
+    }
+
+    createEligibilityControls();
 
     // Initial load
     loadAreas();
@@ -64,26 +200,52 @@ $(document).ready(function () {
         const name = $("#area-name").val().trim();
         const zone = $("#area-zone").val();
 
+        const maxVehiclesInput = $("#max-vehicles-per-household");
+        const maxVehiclesValue = maxVehiclesInput.val();
+
         if (!name || !zone) {
-            showToast("warning", "Missing information",
-                "Please enter an area name and select a zone.");
+            showToast(
+                "warning",
+                t.missingInformation,
+                t.enterNameAndZone
+            );
             return;
         }
 
         if (coordinates.length < 3) {
-            showToast("warning", "Invalid polygon",
-                "An area must contain at least three points.");
+            showToast(
+                "warning",
+                t.invalidPolygon,
+                t.minimumThreePoints
+            );
             return;
         }
+
+        if (maxVehiclesValue !== "" && !maxVehiclesInput[0].checkValidity()) {
+            maxVehiclesInput[0].reportValidity();
+            return;
+        }
+
+        const rule = {
+            requiresResidentAddress: $("#requires-resident-address").is(":checked"),
+            maxVehiclesPerHousehold: maxVehiclesValue === ""
+                ? null
+                : Number(maxVehiclesValue),
+            emissionClass: $("#minimum-emission-class").val() || null
+        };
 
         const dto = {
             id: selectedAreaId,
             name: name,
             zone: zone,
-            coordinates: coordinates
+            coordinates: coordinates,
+            rule: rule
         };
 
         const isUpdate = selectedAreaId !== null;
+        const saveButton = $("#save-area");
+
+        saveButton.prop("disabled", true);
 
         $.ajax({
             url: "/rest/area",
@@ -91,13 +253,13 @@ $(document).ready(function () {
             contentType: "application/json",
             data: JSON.stringify(dto),
 
-            success: function (response) {
+            success: function () {
                 showToast(
                     "success",
-                    "Area saved",
+                    t.areaSaved,
                     isUpdate
-                        ? "Area updated successfully."
-                        : "Area created successfully."
+                        ? t.areaUpdated
+                        : t.areaCreated
                 );
 
                 loadAreas();
@@ -106,9 +268,13 @@ $(document).ready(function () {
             error: function (xhr) {
                 showToast(
                     "error",
-                    "Save failed",
+                    t.saveFailed,
                     xhr.responseText || `HTTP ${xhr.status}`
                 );
+            },
+
+            complete: function () {
+                saveButton.prop("disabled", false);
             }
         });
     });
@@ -121,7 +287,7 @@ $(document).ready(function () {
 
         const id = selectedAreaId;
 
-        if (!confirm("Are you sure you want to delete this area?")) {
+        if (!confirm(translate(t.deleteConfirmation, { id }))) {
             return;
         }
 
@@ -130,8 +296,11 @@ $(document).ready(function () {
             method: "DELETE",
 
             success: function () {
-                showToast("success", "Area deleted",
-                    "The area was deleted successfully.");
+                showToast(
+                    "success",
+                    t.areaDeleted,
+                    t.areaDeleteSuccess
+                );
 
                 loadAreas();
             },
@@ -139,7 +308,7 @@ $(document).ready(function () {
             error: function (xhr) {
                 showToast(
                     "error",
-                    "Delete failed",
+                    t.deleteFailed,
                     xhr.responseText || `HTTP ${xhr.status}`
                 );
             }
@@ -147,7 +316,7 @@ $(document).ready(function () {
     });
 
     function loadAreas() {
-        $("#map-status").text("Loading areas...");
+        $("#map-status").text(t.loadingAreas);
 
         $.ajax({
             url: "/rest/area",
@@ -161,14 +330,16 @@ $(document).ready(function () {
                 renderAreaLayers();
 
                 $("#map-status").text(
-                    `${areas.length} area(s) loaded`
+                    getCountText(areas.length, "area")
                 );
 
                 if (areas.length > 0) {
                     const bounds = areaLayers.getBounds();
 
                     if (bounds.isValid()) {
-                        map.fitBounds(bounds, { padding: [30, 30] });
+                        map.fitBounds(bounds, {
+                            padding: [30, 30]
+                        });
                     }
                 }
 
@@ -186,11 +357,11 @@ $(document).ready(function () {
             },
 
             error: function (xhr) {
-                $("#map-status").text("Failed to load areas.");
+                $("#map-status").text(t.loadFailed);
 
                 showToast(
                     "error",
-                    "Loading failed",
+                    t.loadingFailed,
                     xhr.responseText || `HTTP ${xhr.status}`
                 );
             }
@@ -199,18 +370,20 @@ $(document).ready(function () {
 
     function renderAreaSelect() {
         areaSelect.empty().append(
-            $("<option>").val("").text("Select an area...")
+            $("<option>").val("").text(t.selectArea)
         );
 
         areas.forEach(function (area) {
             areaSelect.append(
                 $("<option>")
                     .val(area.id)
-                    .text(`${area.name} (${area.zone})`)
+                    .text(`${area.name} (${formatZone(area.zone)})`)
             );
         });
 
-        areaSelect.val(selectedAreaId ?? "").trigger("change.select2");
+        areaSelect
+            .val(selectedAreaId ?? "")
+            .trigger("change.select2");
     }
 
     function renderAreaLayers() {
@@ -230,7 +403,7 @@ $(document).ready(function () {
             });
 
             polygon.bindTooltip(
-                `${area.name} (${area.zone})`
+                `${area.name} (${formatZone(area.zone)})`
             );
 
             polygon.on("click", function () {
@@ -248,6 +421,21 @@ $(document).ready(function () {
         $("#area-name").val(area.name);
         $("#area-zone").val(area.zone).trigger("change.select2");
 
+        const rule = area.rule || {};
+
+        $("#requires-resident-address").prop(
+            "checked",
+            rule.requiresResidentAddress === true
+        );
+
+        $("#max-vehicles-per-household").val(
+            rule.maxVehiclesPerHousehold ?? ""
+        );
+
+        $("#minimum-emission-class").val(
+            rule.emissionClass ?? ""
+        );
+
         coordinates = (area.coordinates || []).map(point => ({
             latitude: point.latitude,
             longitude: point.longitude
@@ -255,7 +443,7 @@ $(document).ready(function () {
 
         areaSelect.val(area.id);
 
-        $("#save-area").text("Update area");
+        $("#save-area").text(t.updateArea);
         $("#delete-area").prop("disabled", false);
 
         renderCoordinates();
@@ -269,9 +457,15 @@ $(document).ready(function () {
         $("#area-form")[0].reset();
         $("#area-id").val("");
 
+        $("#requires-resident-address").prop("checked", false);
+        $("#max-vehicles-per-household").val("");
+        $("#minimum-emission-class").val("");
+
         areaSelect.val("");
 
-        $("#save-area").text("Create area");
+        $("#area-zone").trigger("change.select2");
+
+        $("#save-area").text(t.createArea);
         $("#delete-area").prop("disabled", true);
 
         renderCoordinates();
@@ -315,7 +509,9 @@ $(document).ready(function () {
                 }
             );
 
-            marker.bindTooltip(`Point ${index + 1}`);
+            marker.bindTooltip(
+                translate(t.pointNumber, { number: index + 1 })
+            );
 
             marker.on("dragend", function (event) {
                 const position = event.target.getLatLng();
@@ -349,7 +545,7 @@ $(document).ready(function () {
             const removeButton = $("<button>")
                 .addClass("btn btn-sm btn-outline-danger")
                 .attr("type", "button")
-                .text("Remove")
+                .text(t.remove)
                 .on("click", function () {
                     coordinates.splice(index, 1);
 
@@ -362,7 +558,7 @@ $(document).ready(function () {
         });
 
         $("#coordinate-count").text(
-            `${coordinates.length} point(s)`
+            getCountText(coordinates.length, "point")
         );
     }
 

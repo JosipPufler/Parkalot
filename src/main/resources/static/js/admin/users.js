@@ -1,3 +1,4 @@
+
 $(function () {
     const usersTable = $("#users-table-body");
     const usersStatus = $("#users-status");
@@ -11,22 +12,28 @@ $(function () {
     const emailInput = $("#user-email");
     const roleSelect = $("#user-role");
 
+    const streetInput = $("#user-street");
+    const houseNumberInput = $("#user-house-number");
+    const cityInput = $("#user-city");
+    const postalCodeInput = $("#user-postal-code");
+    const countryInput = $("#user-country");
+
     const saveButton = $("#save-user");
     const formStatus = $("#user-form-status");
 
+    const t = window.i18n.users;
+
     let users = [];
 
-    loadUsers();
-
-    // --------------------------------------------------
-    // Load users
-    // --------------------------------------------------
+    $("#user-modal [data-dismiss='modal']").on("click", function () {
+        userModal.modal("hide");
+    });
 
     function loadUsers() {
         usersStatus
             .removeClass("text-danger")
             .addClass("text-muted")
-            .text("Loading users...");
+            .text(t.loadingUsers);
 
         usersTable.empty();
 
@@ -41,15 +48,11 @@ $(function () {
             usersStatus
                 .removeClass("text-muted")
                 .addClass("text-danger")
-                .text("Failed to load users.");
+                .text(t.loadError);
 
             console.error("Failed to load users:", xhr);
         });
     }
-
-    // --------------------------------------------------
-    // Render users
-    // --------------------------------------------------
 
     function renderUsers() {
         usersTable.empty();
@@ -58,7 +61,7 @@ $(function () {
             usersStatus
                 .removeClass("text-danger")
                 .addClass("text-muted")
-                .text("No users found.");
+                .text(t.noUsers);
 
             return;
         }
@@ -87,7 +90,7 @@ $(function () {
                     roleBadge.addClass("badge-primary");
             }
 
-            roleBadge.text(user.role);
+            roleBadge.text(getRoleName(user.role));
             row.append($("<td>").append(roleBadge));
 
             const actions = $("<td>").addClass("text-end text-nowrap");
@@ -95,7 +98,7 @@ $(function () {
             const editButton = $("<button>", {
                 type: "button",
                 class: "btn btn-sm btn-outline-primary me-2",
-                title: "Edit user"
+                title: t.editUser
             }).html('<i class="bi bi-pencil"></i>');
 
             editButton.on("click", function () {
@@ -105,7 +108,7 @@ $(function () {
             const deleteButton = $("<button>", {
                 type: "button",
                 class: "btn btn-sm btn-outline-danger",
-                title: "Delete user"
+                title: t.deleteUser
             }).html('<i class="bi bi-trash"></i>');
 
             deleteButton.on("click", function () {
@@ -118,15 +121,25 @@ $(function () {
             usersTable.append(row);
         });
 
-        usersStatus.text(`${users.length} user(s) found.`);
+        usersStatus.text(
+            translate(t.userCount, { count: users.length })
+        );
     }
 
-    // --------------------------------------------------
-    // Edit modal
-    // --------------------------------------------------
+    function getRoleName(role) {
+        const roles = {
+            ADMIN: t.roleAdminLabel,
+            OFFICER: t.roleOfficerLabel,
+            USER: t.roleUserLabel
+        };
+
+        return roles[role] || role;
+    }
 
     function openEditModal(user) {
         userForm[0].reset();
+
+        const household = user.household;
 
         userId.val(user.id);
         firstNameInput.val(user.firstName);
@@ -134,32 +147,57 @@ $(function () {
         emailInput.val(user.email);
         roleSelect.val(user.role);
 
+        // Populate household fields.
+        streetInput.val(household?.street ?? "");
+        houseNumberInput.val(household?.houseNumber ?? "");
+        cityInput.val(household?.city ?? "");
+        postalCodeInput.val(household?.postalCode ?? "");
+        countryInput.val(household?.country ?? "");
+
         formStatus.empty();
+
+        saveButton.text(t.saveChanges);
 
         userModal.modal("show");
     }
 
-    // --------------------------------------------------
-    // Update user
-    // --------------------------------------------------
-
     userForm.on("submit", function (event) {
         event.preventDefault();
 
+        const id = Number(userId.val());
+
         const user = {
-            id: Number(userId.val()),
+            id: id,
             firstName: firstNameInput.val().trim(),
             lastName: lastNameInput.val().trim(),
             email: emailInput.val().trim(),
-            role: roleSelect.val()
+            role: roleSelect.val(),
+
+            household: {
+                id: users.find(u => u.id === id)?.household?.id ?? null,
+                street: streetInput.val().trim(),
+                houseNumber: houseNumberInput.val().trim(),
+                city: cityInput.val().trim(),
+                postalCode: postalCodeInput.val().trim(),
+                country: countryInput.val().trim()
+            }
         };
 
-        if (!user.firstName || !user.lastName || !user.email) {
-            showFormStatus("Please fill in all fields.", "danger");
+        if (
+            !user.firstName ||
+            !user.lastName ||
+            !user.email ||
+            !user.household.street ||
+            !user.household.houseNumber ||
+            !user.household.city ||
+            !user.household.postalCode ||
+            !user.household.country
+        ) {
+            showFormStatus(t.fillAllFields, "danger");
             return;
         }
 
-        saveButton.prop("disabled", true).text("Saving...");
+        saveButton.prop("disabled", true).text(t.saving);
 
         $.ajax({
             url: "/rest/users",
@@ -169,24 +207,26 @@ $(function () {
         }).done(function () {
             userModal.modal("hide");
             loadUsers();
+
+            if (typeof showToast === "function") {
+                showToast(t.updateSuccess, "success");
+            }
         }).fail(function (xhr) {
             const message = xhr.responseJSON?.message
-                || "Failed to update user.";
+                || t.updateError;
 
             showFormStatus(message, "danger");
         }).always(function () {
             saveButton.prop("disabled", false)
-                .text("Save changes");
+                .text(t.saveChanges);
         });
     });
 
-    // --------------------------------------------------
-    // Delete user
-    // --------------------------------------------------
-
     function deleteUser(user) {
         const confirmed = confirm(
-            `Are you sure you want to delete ${user.firstName} ${user.lastName}?`
+            translate(t.deleteConfirmation, {
+                name: `${user.firstName} ${user.lastName}`
+            })
         );
 
         if (!confirmed) {
@@ -201,13 +241,9 @@ $(function () {
         }).fail(function (xhr) {
             console.error("Failed to delete user:", xhr);
 
-            alert(xhr.responseJSON?.message || "Failed to delete user.");
+            alert(xhr.responseJSON?.message || t.deleteError);
         });
     }
-
-    // --------------------------------------------------
-    // Helpers
-    // --------------------------------------------------
 
     function showFormStatus(message, type) {
         formStatus
@@ -215,4 +251,12 @@ $(function () {
             .addClass(type === "danger" ? "text-danger" : "text-success")
             .text(message);
     }
+
+    function translate(template, values = {}) {
+        return template.replace(/\{(\w+)\}/g, function (match, key) {
+            return values[key] ?? match;
+        });
+    }
+
+    loadUsers();
 });

@@ -1,9 +1,12 @@
 package hr.algebra.parkalot.services;
 
+import hr.algebra.parkalot.exceptions.LocalizedBadRequestException;
+import hr.algebra.parkalot.exceptions.LocalizedInternalException;
 import hr.algebra.parkalot.exceptions.PayPalException;
 import hr.algebra.parkalot.models.dtos.PermitRequestDto;
 import hr.algebra.parkalot.models.entities.Permit;
 import hr.algebra.parkalot.models.entities.Violation;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.services.db.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,7 +69,7 @@ public class PayPalService {
         );
 
         if (response.getBody() == null) {
-            throw new PayPalException("Error creating order");
+            throw new LocalizedInternalException(LocalizedExceptionKeys.PAYMENT_CREATE_ORDER);
         }
 
         if (response.getBody() != null) {
@@ -75,7 +78,7 @@ public class PayPalService {
                 return (String) body.get("id");
             }
         }
-        throw new PayPalException("Error getting order id");
+        throw new LocalizedInternalException(LocalizedExceptionKeys.PAYMENT_ORDER_ID);
     }
 
     private String getAccessToken() {
@@ -121,7 +124,7 @@ public class PayPalService {
         );
 
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new PayPalException("Failed to capture PayPal order: " + orderId);
+            throw new LocalizedInternalException(LocalizedExceptionKeys.PAYMENT_CAPTURE, orderId);
         }
 
         return response.getBody();
@@ -137,8 +140,7 @@ public class PayPalService {
                 violationService.save(violation);
                 return true;
             }
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Paid amount " + amount + " EUR does not match required " + violation.getPrice() + " EUR");
+            throw new LocalizedBadRequestException(LocalizedExceptionKeys.PAYMENT_AMOUNT, amount, violation.getPrice());
         }
 
         Optional<Permit> permitPaymentOpt = permitService.findByOrderId(orderId);
@@ -150,8 +152,7 @@ public class PayPalService {
                 permitService.save(permitPayment);
                 return true;
             }
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Paid amount " + amount + " EUR does not match required " + permitPayment.getPrice() + " EUR");
+            throw new LocalizedBadRequestException(LocalizedExceptionKeys.PAYMENT_AMOUNT, amount, permitPayment.getPrice());
 
         }
         return false;

@@ -52,6 +52,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PermitArchive> permitArchives;
 
+    @ManyToOne
+    @JoinColumn(name = "household_id")
+    private Household household;
+
     public String getName(){
         return lastName == null ? firstName : firstName + " " + lastName;
     }

@@ -1,18 +1,22 @@
 package hr.algebra.parkalot.configs;
 
-import hr.algebra.parkalot.exceptions.CurrentUserNotFoundException;
-import hr.algebra.parkalot.exceptions.DbConflictException;
+import hr.algebra.parkalot.exceptions.*;
 import hr.algebra.parkalot.services.utils.HttpUtils;
-import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.io.ParseException;
+import org.springframework.context.MessageSource;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.postgresql.util.PSQLException;
 
+import java.util.Locale;
+
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class RestExceptionHandler {
+    private final MessageSource messageSource;
 
     @ExceptionHandler(ParseException.class)
     public ResponseEntity<ProblemDetail> handleParseException(ParseException e) {
@@ -24,9 +28,14 @@ public class RestExceptionHandler {
         return HttpUtils.produceUnauthorizedResponse(e.getMessage());
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ProblemDetail> handleEntityNotFound(EntityNotFoundException e) {
-        return HttpUtils.produceNotFoundResponse(e.getMessage());
+    @ExceptionHandler(LocalizedNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleEntityNotFound(
+            LocalizedNotFoundException e,
+            Locale locale) {
+
+        String message = messageSource.getMessage(e.getMessageKey().getKey(), e.getArguments(), locale);
+
+        return HttpUtils.produceNotFoundResponse(message);
     }
 
     @ExceptionHandler(PSQLException.class)
@@ -34,8 +43,23 @@ public class RestExceptionHandler {
         return HttpUtils.produceConflictErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler(DbConflictException.class)
-    public ResponseEntity<ProblemDetail> handleDbConflictException(DbConflictException e) {
-        return HttpUtils.produceConflictErrorResponse(e.getMessage());
+    @ExceptionHandler(LocalizedConflictException.class)
+    public ResponseEntity<ProblemDetail> handleDbConflict(
+            LocalizedNotFoundException e,
+            Locale locale) {
+
+        String message = messageSource.getMessage(e.getMessageKey().getKey(), e.getArguments(), locale);
+
+        return HttpUtils.produceConflictErrorResponse(message);
+    }
+
+    @ExceptionHandler(LocalizedBadRequestException.class)
+    public ResponseEntity<ProblemDetail> handleDbConflict(
+            LocalizedBadRequestException e,
+            Locale locale) {
+
+        String message = messageSource.getMessage(e.getMessageKey().getKey(), e.getArguments(), locale);
+
+        return HttpUtils.produceBadRequestResponse(message);
     }
 }

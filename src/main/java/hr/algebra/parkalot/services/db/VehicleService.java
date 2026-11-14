@@ -1,8 +1,10 @@
 package hr.algebra.parkalot.services.db;
 
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
 import hr.algebra.parkalot.models.dtos.VehicleDto;
 import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.models.entities.Vehicle;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.repositories.VehicleRepo;
 import hr.algebra.parkalot.services.utils.Mapper;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,7 +31,7 @@ public class VehicleService extends GeneralCrudService<Vehicle, VehicleRepo> {
 
         vehicleDto.ownerIds().forEach(id -> {
             User user = userService.findById(id).orElseThrow(() ->
-                    new EntityNotFoundException("User with ID: " + id + " not found"));
+                    new LocalizedNotFoundException(LocalizedExceptionKeys.USER_NOT_FOUND, id));
             user.addVehicle(vehicle);
         });
 
@@ -57,13 +59,12 @@ public class VehicleService extends GeneralCrudService<Vehicle, VehicleRepo> {
     @Transactional
     public Vehicle updateVehicle(VehicleDto vehicleDto) {
         Vehicle vehicle = findById(vehicleDto.id()).orElseThrow(() ->
-                new EntityNotFoundException(
-                        "Vehicle with ID: " + vehicleDto.id() + " not found"));
+                new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NOT_FOUND, vehicleDto.id()));
 
         List<User> newOwners = vehicleDto.ownerIds().stream()
                 .distinct()
                 .map(id -> userService.findById(id).orElseThrow(() ->
-                        new EntityNotFoundException("User with ID: " + id + " not found")))
+                        new LocalizedNotFoundException(LocalizedExceptionKeys.USER_NOT_FOUND, id)))
                 .toList();
 
         Set<Long> newOwnerIds = newOwners.stream()

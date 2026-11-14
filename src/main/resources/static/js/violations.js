@@ -1,6 +1,9 @@
+
 $(document).ready(function () {
     const container = $("#violations-container");
     const status = $("#violations-status");
+    const t = window.i18n.violations;
+    const locale = document.documentElement.lang || "en";
 
     $.ajax({
         url: "/rest/violations",
@@ -14,8 +17,8 @@ $(document).ready(function () {
                 .removeClass("text-muted")
                 .addClass("text-danger")
                 .text(xhr.status === 401
-                    ? "Please log in to view your violations."
-                    : "Failed to load violations.");
+                    ? t.loginRequired
+                    : t.loadError);
         }
     });
 
@@ -33,11 +36,12 @@ $(document).ready(function () {
         $("#appeal-modal").modal("show");
     });
 
-    // Submit the appeal as multipart/form-data.
+    // Submit appeal.
     $("#appeal-form").on("submit", function (event) {
         event.preventDefault();
 
         const formData = new FormData();
+
         formData.append("violationId", $("#appeal-violation-id").val());
         formData.append("title", $("#appeal-title").val().trim());
         formData.append("message", $("#appeal-message").val().trim());
@@ -49,7 +53,8 @@ $(document).ready(function () {
         }
 
         const submitButton = $("#appeal-submit");
-        submitButton.prop("disabled", true).text("Submitting...");
+
+        submitButton.prop("disabled", true).text(t.submitting);
         $("#appeal-error").text("");
 
         $.ajax({
@@ -58,73 +63,74 @@ $(document).ready(function () {
             data: formData,
             processData: false,
             contentType: false,
+
             success: function () {
                 $("#appeal-modal").modal("hide");
                 $("#appeal-form")[0].reset();
 
-                // Replace with your existing notification function if available.
-                status.removeClass("text-muted text-danger")
+                status
+                    .removeClass("text-muted text-danger")
                     .addClass("text-success")
-                    .text("Appeal submitted successfully.");
+                    .text(t.appealSuccess);
             },
+
             error: function (xhr) {
                 $("#appeal-error").text(
-                    xhr.responseJSON?.message ||
-                    "Failed to submit the appeal. Please try again."
+                    xhr.responseJSON?.message || t.appealError
                 );
             },
+
             complete: function () {
-                submitButton.prop("disabled", false)
-                    .text("Submit Appeal");
+                submitButton
+                    .prop("disabled", false)
+                    .text(t.submitAppeal);
             }
         });
     });
 
-    // Payment initiation: replace this URL with your actual payment endpoint.
+    // Payment initiation.
     $(document).on("click", "[data-pay-violation]", function () {
         const violationId = $(this).attr("data-pay-violation");
 
-        if (!confirm("Proceed to payment for this violation?")) {
+        if (!confirm(t.paymentConfirm)) {
             return;
         }
 
-        // Example contract only; implement this endpoint on your backend.
         $.ajax({
             url: `/rest/payments/violations/${encodeURIComponent(violationId)}`,
             method: "POST",
+
             success: function (response) {
-                // If your payment provider returns a checkout URL:
                 if (response.checkoutUrl) {
                     window.location.assign(response.checkoutUrl);
                 } else {
-                    status.removeClass("text-muted text-danger")
+                    status
+                        .removeClass("text-muted text-danger")
                         .addClass("text-success")
-                        .text("Payment request initiated.");
+                        .text(t.paymentInitiated);
                 }
             },
+
             error: function (xhr) {
                 alert(
-                    xhr.responseJSON?.message ||
-                    "Could not initiate payment. Please try again."
+                    xhr.responseJSON?.message || t.paymentError
                 );
             }
         });
     });
 
     function renderViolations(violations) {
-        console.log(violations)
         container.empty();
 
         if (!violations || violations.length === 0) {
-            status.text("You have no violations.");
+            status.text(t.empty);
             return;
         }
 
-        // Group violations by licence plate.
         const groups = {};
 
         violations.forEach(function (violation) {
-            const plate = violation.licencePlate || "Unknown vehicle";
+            const plate = violation.licencePlate || t.unknownVehicle;
 
             if (!groups[plate]) {
                 groups[plate] = [];
@@ -134,13 +140,14 @@ $(document).ready(function () {
         });
 
         status.text(
-            `${violations.length} violation(s) across ${Object.keys(groups).length} vehicle(s).`
+            t.summary
+                .replace("{violations}", violations.length)
+                .replace("{vehicles}", Object.keys(groups).length)
         );
 
         Object.entries(groups).forEach(function ([plate, items], index) {
             const collapseId = `vehicle-violations-${index}`;
 
-            // Vehicle group heading.
             const card = $("<div>").addClass("card mb-3");
 
             const header = $("<div>")
@@ -154,11 +161,12 @@ $(document).ready(function () {
 
             const count = $("<span>")
                 .addClass("badge badge-secondary")
-                .text(`${items.length} violation(s)`);
+                .text(
+                    t.violationCount.replace("{count}", items.length)
+                );
 
             header.append(toggle, count);
 
-            // Collapsible group content.
             const body = $("<div>")
                 .addClass("collapse")
                 .attr("id", collapseId);
@@ -184,24 +192,24 @@ $(document).ready(function () {
 
         const message = $("<h5>")
             .addClass("card-title mb-0")
-            .text(violation.message || "Parking violation");
+            .text(violation.message || t.parkingViolation);
 
         const active = violation.active === true;
 
         const badge = $("<span>")
             .addClass(`badge ${active ? "badge-danger" : "badge-secondary"}`)
-            .text(active ? "Active" : "Inactive");
+            .text(active ? t.active : t.inactive);
 
         heading.append(message, badge);
 
         const details = $("<div>").addClass("text-muted small");
 
-        addDetail(details, "Area", violation.area);
-        addDetail(details, "Issued", formatDate(violation.issuedAt));
-        addDetail(details, "Officer", violation.officer);
+        addDetail(details, t.area, violation.area);
+        addDetail(details, t.issued, formatDate(violation.issuedAt));
+        addDetail(details, t.officer, violation.officer);
 
         if (violation.price != null) {
-            addDetail(details, "Fine", `${violation.price.toFixed(2)}`);
+            addDetail(details, t.fine, Number(violation.price).toFixed(2));
         }
 
         body.append(heading, details);
@@ -211,20 +219,19 @@ $(document).ready(function () {
         const payButton = $("<button>")
             .attr("type", "button")
             .addClass("btn btn-success btn-sm mr-2")
-            .text("Pay")
+            .text(t.pay)
             .attr("data-pay-violation", violation.id)
             .prop("disabled", !active || violation.id == null);
 
         const appealButton = $("<button>")
             .attr("type", "button")
             .addClass("btn btn-outline-primary btn-sm")
-            .text("Raise Appeal")
+            .text(t.raiseAppeal)
             .attr("data-appeal-violation", violation.id)
             .prop("disabled", !active || violation.id == null);
 
         actions.append(payButton, appealButton);
         body.append(actions);
-
         card.append(body);
 
         return card;
@@ -232,8 +239,15 @@ $(document).ready(function () {
 
     function addDetail(parent, label, value) {
         const row = $("<p>").addClass("mb-1");
-        $("<strong>").text(`${label}: `).appendTo(row);
-        row.append(document.createTextNode(value ?? "N/A"));
+
+        $("<strong>")
+            .text(`${label}: `)
+            .appendTo(row);
+
+        row.append(
+            document.createTextNode(value ?? "N/A")
+        );
+
         parent.append(row);
     }
 
@@ -244,6 +258,8 @@ $(document).ready(function () {
 
         if (Number.isNaN(date.getTime())) return value;
 
-        return date.toLocaleString();
+        return date.toLocaleString(
+            locale === "hr" ? "hr-HR" : "en-GB"
+        );
     }
 });

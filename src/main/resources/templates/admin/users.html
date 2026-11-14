@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"
+<html th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout.html}">
 
 <head>
-    <title>Manage Users</title>
+    <title th:text="#{users.manage}">Manage Users</title>
 </head>
 
 <body>
@@ -18,10 +18,10 @@
     <div class="container py-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Manage Users</h2>
+            <h2 th:text="#{users.manage}">Manage Users</h2>
         </div>
 
-        <div id="users-status" class="text-muted mb-3">
+        <div id="users-status" class="text-muted mb-3" th:text="#{users.loading}">
             Loading users...
         </div>
 
@@ -29,10 +29,10 @@
             <table class="table table-hover align-middle">
                 <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th class="text-end">Actions</th>
+                    <th th:text="#{users.name}">Name</th>
+                    <th th:text="#{login.email}">Email</th>
+                    <th th:text="#{users.role}">Role</th>
+                    <th class="text-end" th:text="#{actions}">Actions</th>
                 </tr>
                 </thead>
                 <tbody id="users-table-body"></tbody>
@@ -48,7 +48,7 @@
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title" id="user-modal-title">
+                    <h5 class="modal-title" id="user-modal-title" th:text="#{users.edit}">
                         Edit User
                     </h5>
 
@@ -64,32 +64,61 @@
                         <input type="hidden" id="user-id">
 
                         <div class="form-group">
-                            <label for="user-first-name">First name</label>
+                            <label for="user-first-name" th:text="#{register.firstName}">First name</label>
                             <input type="text" class="form-control"
                                    id="user-first-name" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="user-last-name">Last name</label>
+                            <label for="user-last-name" th:text="#{register.lastName}">Last name</label>
                             <input type="text" class="form-control"
                                    id="user-last-name" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="user-email">Email</label>
+                            <label for="user-email" th:text="#{login.email}">Email</label>
                             <input type="email" class="form-control"
                                    id="user-email" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="user-role">Role</label>
+                            <label for="user-role" th:text="#{users.role}">Role</label>
                             <select id="user-role" class="form-control" required>
-                                <option value="USER">User</option>
-                                <option value="OFFICER">Officer</option>
-                                <option value="ADMIN">Admin</option>
+                                <option value="USER" th:text="#{users.role.user}">User</option>
+                                <option value="OFFICER" th:text="#{users.role.officer}">Officer</option>
+                                <option value="ADMIN" th:text="#{users.role.admin}">Admin</option>
                             </select>
                         </div>
 
+                        <div class="form-group">
+                            <label for="user-street" th:text="#{household.street}">Street</label>
+                            <input type="text" class="form-control"
+                                   id="user-street" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-house-number" th:text="#{household.houseNumber}">House number</label>
+                            <input type="text" class="form-control"
+                                   id="user-house-number" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-city" th:text="#{household.city}">City</label>
+                            <input type="text" class="form-control"
+                                   id="user-city" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-country" th:text="#{household.country}">Country</label>
+                            <input type="text" class="form-control"
+                                   id="user-country" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user-postal-code" th:text="#{household.postalCode}">Postal code</label>
+                            <input type="text" class="form-control"
+                                   id="user-postal-code" required>
+                        </div>
                     </form>
 
                     <div id="user-form-status" class="small mt-2"></div>
@@ -97,12 +126,12 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">
+                            data-dismiss="modal" th:text="#{cancel}">
                         Cancel
                     </button>
 
                     <button type="submit" form="user-admin-form"
-                            class="btn btn-primary" id="save-user">
+                            class="btn btn-primary" id="save-user" th:text="#{users.save}">
                         Save changes
                     </button>
                 </div>

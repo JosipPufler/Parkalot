@@ -1,4 +1,15 @@
+
 $(function () {
+    const mapT = window.i18n.map;
+    const drawingT = mapT.admin.area;
+    const eligibilityT = mapT.admin.area;
+    const permitT = window.i18n.permits;
+    const scanT = window.i18n.scan;
+
+    const locale = document.documentElement.lang === "hr"
+        ? "hr-HR"
+        : "en-GB";
+
     const map = L.map("parking-map").setView([0, 0], 2);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -35,6 +46,17 @@ $(function () {
         }
     };
 
+    function formatDate(dateString) {
+        if (!dateString || dateString === "—") {
+            return "—";
+        }
+
+        const [year, month, day] = dateString.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+
+        return new Intl.DateTimeFormat(locale).format(date);
+    }
+
     function showAreaDetails(area, layer) {
         selectedArea = area;
 
@@ -56,22 +78,24 @@ $(function () {
         const buyButton = document.createElement("button");
         buyButton.type = "button";
         buyButton.className = "btn btn-primary btn-sm mt-2";
-        buyButton.textContent = "Buy permit";
+        buyButton.textContent = permitT.buyPermit;
 
         function updateVehicleInfo() {
             const vehicle = window.vehicles.getSelectedVehicle();
 
             vehicleInfo.textContent = vehicle
-                ? `Vehicle: ${vehicle.licencePlate}`
-                : "Select a vehicle first.";
+                ? mapT.vehicle.replace("{plate}", vehicle.licencePlate)
+                : mapT.selectVehicleFirst;
 
             buyButton.disabled = !vehicle;
 
             const permit = activePermits.get(area.id);
-            console.log(permit);
+
             if (permit) {
-                permitInfo.textContent =
-                    `Permit active until: ${permit.endDate}`;
+                permitInfo.textContent = permitT.activeUntil.replace(
+                    "{date}",
+                    formatDate(permit.endDate)
+                );
                 permitInfo.className = "mt-2 text-success";
             } else {
                 permitInfo.textContent = "";
@@ -94,6 +118,7 @@ $(function () {
             $("#permit-modal")
                 .data("area-id", area.id)
                 .data("vehicle-id", vehicle.id);
+
             $("#permit-message").empty();
 
             $("#permit-start-date")
@@ -113,8 +138,9 @@ $(function () {
     }
 
     function drawAreas(data) {
-        console.log(data);
         areaLayer.clearLayers();
+        areaLayers.clear();
+
         areas = data;
 
         data.forEach(area => {
@@ -137,6 +163,7 @@ $(function () {
 
             polygon.bindTooltip(area.name);
             areaLayers.set(area.id, polygon);
+
             polygon.on("click", () => showAreaDetails(area, polygon));
 
             // Keep the DTO associated with its layer for searching.
@@ -144,11 +171,12 @@ $(function () {
             areaLayer.addLayer(polygon);
         });
 
-        count.text(`${data.length} areas`);
+        count.text(mapT.areaCount.replace("{count}", data.length));
+
         status.text(
             data.length
-                ? "Select a zone to view its details."
-                : "No parking areas found."
+                ? mapT.selectZone
+                : ""
         );
 
         if (areaLayer.getLayers().length) {
@@ -182,8 +210,8 @@ $(function () {
     })
         .done(drawAreas)
         .fail(() => {
-            count.text("Unavailable");
-            status.text("Could not load parking areas. Please try again.");
+            count.text(mapT.unavailable);
+            status.text(mapT.loadAreasError);
         });
 
 
@@ -199,16 +227,18 @@ $(function () {
     const undoButton = $("#undo-vertex");
     const clearButton = $("#clear-drawing");
     const saveButton = $("#save-area");
+
     let selectingPlateLocation = false;
     let selectedPlateLocation = null;
 
     function updateDrawingControls() {
         drawingStatus.text(
             vertices.length === 0
-                ? "No vertices selected."
-                : `${vertices.length} vertices selected. ${
-                    drawing ? "Click the map to add more." : ""
-                }`
+                ? drawingT.none
+                : mapT.verticesSelected.replace(
+                "{count}",
+                vertices.length
+            ) + (drawing ? ` ${mapT.clickToAddMore}` : "")
         );
 
         undoButton.prop("disabled", vertices.length === 0);
@@ -219,7 +249,7 @@ $(function () {
             .toggleClass("btn-outline-primary", !drawing)
             .toggleClass("btn-primary", drawing)
             .attr("aria-pressed", String(drawing))
-            .text(drawing ? "Stop drawing" : "Start drawing");
+            .text(drawing ? mapT.stopDrawing : drawingT.startDrawing);
     }
 
     function renderDrawing() {
@@ -232,7 +262,9 @@ $(function () {
                 fillColor: "#dc3545",
                 fillOpacity: 1
             })
-                .bindTooltip(`Vertex ${index + 1}`)
+                .bindTooltip(
+                    mapT.vertex.replace("{number}", index + 1)
+                )
                 .addTo(drawingLayer);
         });
 
@@ -251,30 +283,35 @@ $(function () {
         updateDrawingControls();
     }
 
+    function stopDrawing() {
+        drawing = false;
+        map.getContainer().style.cursor = "";
+        updateDrawingControls();
+    }
+
     function clearDrawing() {
         drawing = false;
         vertices = [];
         previewPolygon = null;
+
         drawingLayer.clearLayers();
         map.getContainer().style.cursor = "";
+
         updateDrawingControls();
     }
 
     startButton.on("click", function () {
         if (drawing) {
-            drawing = false;
-            map.getContainer().style.cursor = "";
+            stopDrawing();
         } else {
             drawing = true;
             map.getContainer().style.cursor = "crosshair";
+            updateDrawingControls();
         }
-
-        updateDrawingControls();
     });
 
     $("#start-plate-scan").on("click", function () {
         if (drawing) {
-            // Use your existing function to exit area drawing mode.
             stopDrawing();
         }
 
@@ -282,26 +319,33 @@ $(function () {
         selectedPlateLocation = null;
 
         areaLayers.forEach(polygon => {
-            polygon.getElement()?.style.setProperty("pointer-events", "none");
+            polygon.getElement()?.style.setProperty(
+                "pointer-events",
+                "none"
+            );
         });
+
         map.getContainer().style.cursor = "crosshair";
-        showNotification("Click the vehicle's location on the map.", "info");
+
+        showNotification(mapT.selectPlateLocation, "info");
     });
 
     $(document).on("keydown", function (event) {
         if (event.key === "Escape" && drawing) {
-            drawing = false;
-            map.getContainer().style.cursor = "";
-            updateDrawingControls();
+            stopDrawing();
         }
     });
 
     map.on("click", function (event) {
         if (selectingPlateLocation) {
             selectingPlateLocation = false;
+
             areaLayers.forEach(polygon => {
-                polygon.getElement()?.style.removeProperty("pointer-events");
+                polygon.getElement()?.style.removeProperty(
+                    "pointer-events"
+                );
             });
+
             map.getContainer().style.cursor = "";
 
             selectedPlateLocation = event.latlng;
@@ -318,7 +362,9 @@ $(function () {
             return;
         }
 
-        if (!drawing) return;
+        if (!drawing) {
+            return;
+        }
 
         vertices.push([
             event.latlng.lat,
@@ -339,20 +385,39 @@ $(function () {
         const name = $("#new-area-name").val().trim();
         const zone = $("#new-area-zone").val();
 
+        const maxVehiclesInput = $("#max-vehicles-per-household");
+        const maxVehiclesValue = maxVehiclesInput.val();
+
         if (!name || !zone) {
-            drawingStatus.text("Enter an area name and select a zone.");
+            drawingStatus.text(mapT.enterAreaNameAndZone);
             return;
         }
 
         if (vertices.length < 3) {
-            drawingStatus.text("A polygon needs at least 3 vertices.");
+            drawingStatus.text(mapT.minimumThreeVertices);
             return;
         }
 
+        // Validate the optional maximum vehicles value.
+        if (
+            maxVehiclesValue !== "" &&
+            !maxVehiclesInput[0].checkValidity()
+        ) {
+            maxVehiclesInput[0].reportValidity();
+            return;
+        }
+
+        // Build the eligibility rule.
+        const rule = {
+            requiresResidentAddress: $("#requires-resident-address").is(":checked"),
+            maxVehiclesPerHousehold: maxVehiclesValue === ""
+                ? null
+                : Number(maxVehiclesValue),
+            emissionClass: $("#minimum-emission-class").val() || null
+        };
+
         // Close the drawing mode before saving.
-        drawing = false;
-        map.getContainer().style.cursor = "";
-        updateDrawingControls();
+        stopDrawing();
 
         const areaDto = {
             name: name,
@@ -360,10 +425,13 @@ $(function () {
             coordinates: vertices.map(([latitude, longitude]) => ({
                 latitude,
                 longitude
-            }))
+            })),
+            rule: rule
         };
-        console.log(areaDto)
-        saveButton.prop("disabled", true).text("Saving...");
+
+        saveButton
+            .prop("disabled", true)
+            .text(mapT.saving);
 
         $.ajax({
             url: "/rest/area",
@@ -374,9 +442,16 @@ $(function () {
         })
             .done(function () {
                 clearDrawing();
+
                 $("#new-area-name").val("");
                 $("#new-area-zone").val("");
-                drawingStatus.text("Area created successfully.");
+
+                // Reset eligibility fields.
+                $("#requires-resident-address").prop("checked", false);
+                $("#max-vehicles-per-household").val("");
+                $("#minimum-emission-class").val("");
+
+                drawingStatus.text(mapT.areaCreated);
 
                 // Refresh the map from the server.
                 $.ajax({
@@ -386,29 +461,35 @@ $(function () {
                 })
                     .done(drawAreas)
                     .fail(function () {
-                        drawingStatus.text(
-                            "Area saved, but refreshing the map failed."
-                        );
+                        drawingStatus.text(mapT.areaRefreshError);
                     });
             })
             .fail(function (xhr) {
                 drawing = false;
+
                 drawingStatus.text(
                     xhr.responseJSON?.message ||
-                    `Could not save area (HTTP ${xhr.status}).`
+                    mapT.saveAreaError.replace(
+                        "{status}",
+                        xhr.status
+                    )
                 );
             })
             .always(function () {
-                saveButton.text("Save area");
+                saveButton.text(drawingT.save);
                 updateDrawingControls();
             });
     });
 
+
+    // Permit date handling
     function getLocalDateString() {
         const now = new Date();
+
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
+
         return `${year}-${month}-${day}`;
     }
 
@@ -420,23 +501,36 @@ $(function () {
             case "DAY":
                 date.setDate(date.getDate() + 1);
                 break;
+
             case "WEEK":
                 date.setDate(date.getDate() + 7);
                 break;
+
             case "MONTH":
                 date.setDate(1);
                 date.setMonth(date.getMonth() + 1);
+
                 date.setDate(Math.min(
                     originalDay,
-                    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+                    new Date(
+                        date.getFullYear(),
+                        date.getMonth() + 1,
+                        0
+                    ).getDate()
                 ));
                 break;
+
             case "YEAR":
                 date.setDate(1);
                 date.setFullYear(date.getFullYear() + 1);
+
                 date.setDate(Math.min(
                     originalDay,
-                    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+                    new Date(
+                        date.getFullYear(),
+                        date.getMonth() + 1,
+                        0
+                    ).getDate()
                 ));
                 break;
         }
@@ -444,6 +538,7 @@ $(function () {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
+
         return `${year}-${month}-${day}`;
     }
 
@@ -452,17 +547,22 @@ $(function () {
         const duration = $("#permit-duration").val();
 
         $("#permit-end-date").text(
-            startDate ? calculateEndDate(startDate, duration) : "—"
+            startDate
+                ? formatDate(calculateEndDate(startDate, duration))
+                : "—"
         );
     }
 
-    $("#permit-start-date, #permit-duration").on("change", updatePermitEndDate);
+    $("#permit-start-date, #permit-duration")
+        .on("change", updatePermitEndDate);
+
     $("#permit-modal [data-dismiss='modal']").on("click", function () {
         $("#permit-modal").modal("hide");
     });
 
+
+    // Load permits belonging to the selected vehicle
     function loadVehiclePermits(vehicle) {
-        // Reset the previous vehicle's permit information.
         activePermits.clear();
 
         areaLayers.forEach(polygon => {
@@ -520,9 +620,12 @@ $(function () {
     }
 
 
+    // Notifications
     function showNotification(message, type = "success") {
         const alert = $("<div>")
-            .addClass(`alert alert-${type} alert-dismissible fade show shadow`)
+            .addClass(
+                `alert alert-${type} alert-dismissible fade show shadow`
+            )
             .attr("role", "alert")
             .text(message);
 
@@ -530,10 +633,14 @@ $(function () {
             .attr({
                 type: "button",
                 "data-dismiss": "alert",
-                "aria-label": "Close"
+                "aria-label": mapT.close
             })
             .addClass("close")
-            .append($("<span>").attr("aria-hidden", "true").html("&times;"));
+            .append(
+                $("<span>")
+                    .attr("aria-hidden", "true")
+                    .html("&times;")
+            );
 
         alert.append(closeButton);
         $("#notification-container").append(alert);
@@ -542,35 +649,40 @@ $(function () {
             alert.alert("close");
         }, 5000);
     }
-// PLATE
 
+
+    // Licence plate scanning
     $("#plate-scan-modal [data-dismiss='modal']").on("click", function () {
         $("#plate-scan-modal").modal("hide");
     });
 
-    $("#plate-scan-form").on("submit", function (e) {
-        e.preventDefault();
+    $("#plate-scan-form").on("submit", function (event) {
+        event.preventDefault();
 
         if (!selectedPlateLocation) {
-            showNotification("Select a location on the map first.", "warning");
+            showNotification(scanT.selectLocationFirst, "warning");
             return;
         }
 
         const fileInput = $("#plate-scan-image")[0];
 
         if (!fileInput.files.length) {
-            showNotification("Please select an image.", "warning");
+            showNotification(scanT.selectImage, "warning");
             return;
         }
 
         const formData = new FormData();
+
         formData.append("image", fileInput.files[0]);
         formData.append("latitude", selectedPlateLocation.lat);
         formData.append("longitude", selectedPlateLocation.lng);
 
         const button = $("#submit-plate-scan");
 
-        button.prop("disabled", true).text("Processing...");
+        button
+            .prop("disabled", true)
+            .text(scanT.processing);
+
         $("#plate-scan-result").empty();
 
         $.ajax({
@@ -581,29 +693,40 @@ $(function () {
             contentType: false,
 
             success: function (result) {
+                const plate = result.violationDto?.licencePlate;
+
                 $("#plate-scan-result").empty().append(
                     $("<div>")
                         .addClass("alert alert-success")
-                        .text("Recognized licence plate: " +
-                            (result.violationDto.licencePlate || "No plate recognized"))
+                        .text(
+                            scanT.recognizedPlate.replace(
+                                "{plate}",
+                                plate || scanT.noPlateRecognized
+                            )
+                        )
                 );
             },
 
             error: function (xhr) {
                 const message = xhr.responseJSON?.message
                     || xhr.responseJSON?.error
-                    || "Failed to process the image.";
+                    || scanT.processingError;
 
                 $("#plate-scan-result").empty().append(
-                    $("<div>").addClass("alert alert-danger").text(message)
+                    $("<div>")
+                        .addClass("alert alert-danger")
+                        .text(message)
                 );
             },
 
             complete: function () {
-                button.prop("disabled", false).text("Upload and scan");
+                button
+                    .prop("disabled", false)
+                    .text(scanT.uploadAndScan);
             }
         });
     });
+
 
     updateDrawingControls();
 });

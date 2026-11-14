@@ -1,8 +1,10 @@
 package hr.algebra.parkalot.controllers.rest;
 
+import hr.algebra.parkalot.exceptions.LocalizedNotFoundException;
 import hr.algebra.parkalot.models.entities.Area;
 import hr.algebra.parkalot.models.dtos.AreaDto;
 import hr.algebra.parkalot.models.dtos.CoordinateDto;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.services.db.AreaService;
 import hr.algebra.parkalot.services.utils.HttpUtils;
 import hr.algebra.parkalot.services.utils.Mapper;
@@ -40,7 +42,7 @@ public class AreaController {
     @PostMapping()
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> createArea(@Valid @RequestBody AreaDto areaDto) {
-        Area area = areaService.save(Mapper.mapAreaDtoToArea(areaDto));
+        Area area = areaService.saveArea(areaDto);
 
         return ResponseEntity.ok(new AreaDto(area));
     }
@@ -50,7 +52,7 @@ public class AreaController {
     public ResponseEntity<?> updateArea(@Valid @RequestBody AreaDto areaDto) {
         Optional<Area> area = areaService.updateArea(areaDto);
         if (area.isEmpty()) {
-            return HttpUtils.produceNotFoundResponse("Area not found");
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.AREA_NOT_FOUND, areaDto.id());
         }
 
         return HttpUtils.produceOkResponse();
@@ -60,7 +62,7 @@ public class AreaController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteArea(@PathVariable Long id){
         if(!areaService.existsById(id)){
-            return HttpUtils.produceNotFoundResponse("No area for the given id: " + id);
+            throw new LocalizedNotFoundException(LocalizedExceptionKeys.AREA_NOT_FOUND, id);
         }
         areaService.deleteById(id);
         return HttpUtils.produceOkResponse();

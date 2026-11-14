@@ -13,22 +13,29 @@ $(function () {
     const yearInput = $("#vehicle-year");
     const licencePlateInput = $("#vehicle-licence-plate");
     const ownersSelect = $("#vehicle-owners");
+    const emissionClassSelect = $("#vehicle-emission-class");
+
+    const t = window.i18n.vehicles;
 
     let vehicles = [];
     let users = [];
 
     ownersSelect.select2({
         width: "100%",
-        placeholder: "Select vehicle owners",
+        placeholder: t.selectOwners,
         allowClear: true,
-        dropdownParent: $("#vehicle-modal")
+        dropdownParent: vehicleModal
+    });
+
+    $("#vehicle-modal [data-dismiss='modal']").on("click", function () {
+        vehicleModal.modal("hide");
     });
 
     function loadData() {
         vehiclesTable.html(`
             <tr>
                 <td colspan="6" class="text-center text-muted">
-                    Loading vehicles...
+                    ${t.loadingVehicles}
                 </td>
             </tr>
         `);
@@ -55,10 +62,10 @@ $(function () {
             vehiclesStatus
                 .removeClass("text-muted")
                 .addClass("text-danger")
-                .text("Failed to load vehicles.");
+                .text(t.loadError);
 
             console.error("Failed to load admin vehicle data:", xhr);
-        })
+        });
     }
 
     function populateOwnersSelect() {
@@ -80,7 +87,7 @@ $(function () {
 
     function getOwnerNames(ownerIds) {
         if (!ownerIds || ownerIds.length === 0) {
-            return "No owners assigned";
+            return t.noOwners;
         }
 
         return ownerIds.map(function (id) {
@@ -88,7 +95,7 @@ $(function () {
 
             return user
                 ? `${user.firstName} ${user.lastName}`
-                : `Unknown user (#${id})`;
+                : translate(t.unknownUser, { id });
         }).join(", ");
     }
 
@@ -99,7 +106,7 @@ $(function () {
             vehiclesTable.html(`
                 <tr>
                     <td colspan="6" class="text-center text-muted">
-                        No vehicles found.
+                        ${t.noVehicles}
                     </td>
                 </tr>
             `);
@@ -122,7 +129,7 @@ $(function () {
             const editButton = $("<button>", {
                 type: "button",
                 class: "btn btn-sm btn-outline-primary me-2",
-                title: "Edit vehicle"
+                title: t.editVehicle
             }).html('<i class="bi bi-pencil"></i>');
 
             editButton.on("click", function () {
@@ -132,7 +139,7 @@ $(function () {
             const deleteButton = $("<button>", {
                 type: "button",
                 class: "btn btn-sm btn-outline-danger",
-                title: "Delete vehicle"
+                title: t.deleteVehicle
             }).html('<i class="bi bi-trash"></i>');
 
             deleteButton.on("click", function () {
@@ -151,13 +158,13 @@ $(function () {
 
         vehicleId.val("");
         ownersSelect.val([]).trigger("change");
+        emissionClassSelect.val("").trigger("change");
 
         formStatus.empty();
 
-        $("#vehicle-modal-title").text("Add Vehicle");
-        saveButton.text("Create Vehicle");
+        $("#vehicle-modal-title").text(t.addVehicle);
+        saveButton.text(t.createVehicle);
 
-        // Licence plates can be edited only when creating.
         licencePlateInput.prop("disabled", false);
 
         vehicleModal.modal("show");
@@ -176,14 +183,18 @@ $(function () {
             (vehicle.ownerIds || []).map(String)
         ).trigger("change");
 
+        emissionClassSelect
+            .val(vehicle.emissionClass || "")
+            .trigger("change");
+
         formStatus.empty();
 
-        $("#vehicle-modal-title").text("Edit Vehicle");
-        saveButton.text("Save Changes");
+        $("#vehicle-modal-title").text(t.editVehicle);
+        saveButton.text(t.saveChanges);
 
         licencePlateInput.prop("disabled", false);
 
-        vehicleModal.show();
+        vehicleModal.modal("show");
     }
 
     vehicleForm.on("submit", function (event) {
@@ -196,12 +207,13 @@ $(function () {
             model: modelInput.val().trim(),
             year: Number(yearInput.val()),
             licencePlate: licencePlateInput.val().trim().toUpperCase(),
-            ownerIds: (ownersSelect.val() || []).map(Number)
+            ownerIds: (ownersSelect.val() || []).map(Number),
+            emissionClass: emissionClassSelect.val() || null
         };
 
         if (!vehicle.make || !vehicle.model ||
             !vehicle.licencePlate || !vehicle.year) {
-            showFormStatus("Please fill in all vehicle fields.", "danger");
+            showFormStatus(t.fillAllFields, "danger");
             return;
         }
 
@@ -212,7 +224,7 @@ $(function () {
         }
 
         saveButton.prop("disabled", true)
-            .text(isUpdate ? "Saving..." : "Creating...");
+            .text(isUpdate ? t.saving : t.creating);
 
         $.ajax({
             url: isUpdate ? "/rest/vehicle" : "/rest/vehicle/insert",
@@ -222,20 +234,17 @@ $(function () {
         }).done(function () {
             vehicleModal.modal("hide");
             loadData();
-        }).fail(function (xhr) {
-            const message = xhr.responseJSON?.message
-                || "Failed to save vehicle.";
-
-            showFormStatus(message, "danger");
         }).always(function () {
             saveButton.prop("disabled", false)
-                .text(isUpdate ? "Save Changes" : "Create Vehicle");
+                .text(isUpdate ? t.saveChanges : t.createVehicle);
         });
     });
 
     function deleteVehicle(vehicle) {
         const confirmed = confirm(
-            `Are you sure you want to delete vehicle ${vehicle.licencePlate}?`
+            translate(t.deleteConfirmation, {
+                plate: vehicle.licencePlate
+            })
         );
 
         if (!confirmed) {
@@ -247,17 +256,20 @@ $(function () {
             method: "DELETE"
         }).done(function () {
             loadData();
-        }).fail(function (xhr) {
-            console.error("Failed to delete vehicle:", xhr);
-            alert(xhr.responseJSON?.message || "Failed to delete vehicle.");
         });
     }
 
-    function showFormStatus(message, type) {
+    function showFormStatus(message) {
         formStatus
             .removeClass("text-danger text-success")
-            .addClass(type === "danger" ? "text-danger" : "text-success")
+            .addClass("text-success")
             .text(message);
+    }
+
+    function translate(template, values = {}) {
+        return template.replace(/\{(\w+)\}/g, function (match, key) {
+            return values[key] ?? match;
+        });
     }
 
     loadData();

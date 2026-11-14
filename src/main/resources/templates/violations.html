@@ -1,20 +1,19 @@
-
 <!DOCTYPE html>
-<html lang="en"
+<html th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout.html}">
 <head>
-    <title>My Violations</title>
+    <title th:text="#{nav.violations}">My Violations</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div th:replace="~{fragments/nav :: navbar}"></div>
 
     <div class="container py-4">
-        <h2 class="mb-4">My Violations</h2>
+        <h2 class="mb-4" th:text="#{nav.violations}">My Violations</h2>
 
-        <div id="violations-status" class="text-muted mb-3">
+        <div id="violations-status" class="text-muted mb-3" th:text="#{violations.loading}">
             Loading violations...
         </div>
 
@@ -27,7 +26,7 @@
                 <div class="modal-content">
                     <form id="appeal-form" enctype="multipart/form-data">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="appeal-modal-title">
+                            <h5 class="modal-title" id="appeal-modal-title" th:text="#{violations.appeal.raise}">
                                 Raise an Appeal
                             </h5>
                             <button type="button" class="close"
@@ -41,14 +40,14 @@
                                    name="violationId">
 
                             <div class="form-group">
-                                <label for="appeal-title">Title</label>
+                                <label for="appeal-title" th:text="#{violations.appeal.title}">Title</label>
                                 <input type="text" class="form-control"
                                        id="appeal-title" name="title"
                                        maxlength="150" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="appeal-message">Explanation</label>
+                                <label for="appeal-message" th:text="#{violations.appeal.explanation}">Explanation</label>
                                 <textarea class="form-control"
                                           id="appeal-message" name="message"
                                           rows="5" maxlength="5000"
@@ -56,13 +55,13 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="appeal-evidence">
+                                <label for="appeal-evidence" th:text="#{violations.appeal.evidence}">
                                     Evidence (optional)
                                 </label>
                                 <input type="file" class="form-control-file"
                                        id="appeal-evidence" name="evidence"
                                        multiple accept="image/*,.pdf">
-                                <small class="form-text text-muted">
+                                <small class="form-text text-muted" th:text="#{violations.appeal.evidence.info}">
                                     You can attach multiple images or PDF files.
                                 </small>
                             </div>
@@ -73,9 +72,9 @@
 
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary"
-                                    data-dismiss="modal">Cancel</button>
+                                    data-dismiss="modal" th:text="#{cancel}">Cancel</button>
                             <button type="submit" id="appeal-submit"
-                                    class="btn btn-primary">
+                                    class="btn btn-primary" th:text="#{violations.appeal.submit}">
                                 Submit Appeal
                             </button>
                         </div>

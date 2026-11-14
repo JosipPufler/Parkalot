@@ -32,6 +32,8 @@ public class Area {
     @NotNull
     @Enumerated(EnumType.STRING)
     private Zone zone;
+    @OneToOne(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PermitEligibilityRule eligibilityRule;
 
     @OneToMany(mappedBy = "resolvedArea", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -42,5 +44,13 @@ public class Area {
 
     public List<CoordinateDto> getCoordinates() {
         return Arrays.stream(areaPolygon.getCoordinates()).map(CoordinateDto::new).toList();
+    }
+
+    public void setEligibilityRule(PermitEligibilityRule rule) {
+        this.eligibilityRule = rule;
+
+        if (rule != null) {
+            rule.setArea(this);
+        }
     }
 }

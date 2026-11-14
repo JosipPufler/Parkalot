@@ -1,5 +1,9 @@
 package hr.algebra.parkalot.services.db;
 
+import hr.algebra.parkalot.exceptions.AreaGeographyException;
+import hr.algebra.parkalot.exceptions.LocalizedConflictException;
+import hr.algebra.parkalot.models.entities.PermitEligibilityRule;
+import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;
 import hr.algebra.parkalot.models.enums.PermitDuration;
 import hr.algebra.parkalot.models.dtos.AreaDto;
 import hr.algebra.parkalot.models.entities.Area;
@@ -38,16 +42,40 @@ public class AreaService extends GeneralCrudService<Area, AreaRepo> {
     }
 
     @Transactional
+    public Area saveArea(AreaDto areaDto){
+        Area area = Mapper.mapAreaDtoToArea(areaDto);
+        if (repository.overlapsExistingArea(
+                area.getAreaPolygon(),
+                areaDto.id())) {
+            throw new LocalizedConflictException(LocalizedExceptionKeys.AREA_OVERLAPPING);
+        }
+
+        PermitEligibilityRule permitEligibilityRule = Mapper.mapPermitEligibilityRuleFromDto(areaDto.rule());
+        area.setEligibilityRule(permitEligibilityRule);
+        return save(area);
+    }
+
+    @Transactional
     public Optional<Area> updateArea(AreaDto areaDto){
         Optional<Area> areaOpt = findById(areaDto.id());
         if (areaOpt.isEmpty())
             return areaOpt;
 
         Area newArea = Mapper.mapAreaDtoToArea(areaDto);
+        if (repository.overlapsExistingArea(
+                newArea.getAreaPolygon(),
+                areaDto.id())) {
+            throw new LocalizedConflictException(LocalizedExceptionKeys.AREA_OVERLAPPING);
+        }
+
         Area area = areaOpt.get();
         area.setName(newArea.getName());
         area.setZone(newArea.getZone());
         area.setAreaPolygon(newArea.getAreaPolygon());
+
+        area.getEligibilityRule().setMaxVehiclesPerHousehold(areaDto.rule().maxVehiclesPerHousehold());
+        area.getEligibilityRule().setMinimumEmissionClass(areaDto.rule().emissionClass());
+        area.getEligibilityRule().setRequiresResidentAddress(areaDto.rule().requiresResidentAddress());
         return Optional.of(save(area));
     }
 }
