@@ -2,7 +2,6 @@ package hr.algebra.parkalot.services;
 
 import hr.algebra.parkalot.exceptions.LocalizedBadRequestException;
 import hr.algebra.parkalot.exceptions.LocalizedInternalException;
-import hr.algebra.parkalot.exceptions.PayPalException;
 import hr.algebra.parkalot.models.dtos.PermitRequestDto;
 import hr.algebra.parkalot.models.entities.Permit;
 import hr.algebra.parkalot.models.entities.Violation;
@@ -103,7 +102,7 @@ public class PayPalService {
                 return (String) body.get("access_token");
             }
         }
-        throw new PayPalException("Error getting access token");
+        throw new LocalizedInternalException(LocalizedExceptionKeys.PAYMENT_ACCESS_TOKEN);
     }
 
     public Map<String, Object> captureOrder(String orderId) {

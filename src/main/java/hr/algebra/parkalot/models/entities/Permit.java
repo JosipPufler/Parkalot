@@ -30,10 +30,10 @@ public class Permit {
     @NotNull
     LocalDateTime createdAt;
     LocalDateTime paymentTime;
-    @Column(name = "paypal_id", nullable = true)
+    @Column(name = "paypal_id")
     String paypalId;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
     @ManyToOne(optional = false)

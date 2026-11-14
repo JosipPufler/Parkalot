@@ -34,14 +34,14 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_vehicles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "vehicle_id")
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
     @Builder.Default
-    private List<Vehicle> vehicles = new ArrayList<>();
+    private List<VehicleOwnership> vehicleOwnerships = new ArrayList<>();
 
     @OneToMany(mappedBy = "officer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ParkingCheckLog> parkingCheckLogs;
@@ -60,18 +60,8 @@ public class User {
         return lastName == null ? firstName : firstName + " " + lastName;
     }
 
-    public void addVehicle(Vehicle vehicle) {
-        if (!vehicles.contains(vehicle)) {
-            vehicles.add(vehicle);
-        }
-
-        if (!vehicle.getOwners().contains(this)) {
-            vehicle.getOwners().add(this);
-        }
-    }
-
-    public void removeVehicle(Vehicle vehicle) {
-        vehicles.remove(vehicle);
-        vehicle.getOwners().remove(this);
+    public void addVehicleOwnership(VehicleOwnership ownership) {
+        vehicleOwnerships.add(ownership);
+        ownership.setUser(this);
     }
 }

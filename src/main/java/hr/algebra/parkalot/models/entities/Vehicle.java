@@ -38,11 +38,16 @@ public class Vehicle {
     @Builder.Default
     private List<Permit> permits = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "vehicles")
+    @OneToMany(
+            mappedBy = "vehicle",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     @Builder.Default
-    private List<User> owners = new ArrayList<>();
+    private List<VehicleOwnership> ownerships = new ArrayList<>();
 
     public Boolean isOwnedBy(User user) {
-        return owners.stream().anyMatch(owner -> owner.getId().equals(user.getId()));
+        return ownerships.stream().anyMatch(owner -> owner.getUser().getId().equals(user.getId()));
     }
 }

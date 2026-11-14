@@ -53,8 +53,10 @@ public class PermitService extends GeneralCrudService<Permit, PermitRepo> {
         permit.setStartDate(permitDto.startDate());
         permit.setArea(area);
         permit.setVehicle(vehicle);
-        User buyer = vehicle.getOwners().stream()
-                .min(Comparator.comparing(User::getId))
+        User buyer = vehicle.getOwnerships().stream()
+                .filter(VehicleOwnership::getPrimaryOwner)
+                .map(VehicleOwnership::getUser)
+                .findFirst()
                 .orElseThrow(() ->
                         new LocalizedNotFoundException(LocalizedExceptionKeys.VEHICLE_NO_OWNERS));
 

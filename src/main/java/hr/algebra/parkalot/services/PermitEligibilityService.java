@@ -1,6 +1,5 @@
 package hr.algebra.parkalot.services;
 
-import hr.algebra.parkalot.exceptions.AreaEligibilityException;
 import hr.algebra.parkalot.exceptions.LocalizedBadRequestException;
 import hr.algebra.parkalot.models.entities.*;
 import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;

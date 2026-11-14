@@ -29,7 +29,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(LocalizedNotFoundException.class)
-    public ResponseEntity<ProblemDetail> handleEntityNotFound(
+    public ResponseEntity<ProblemDetail> handleNotFound(
             LocalizedNotFoundException e,
             Locale locale) {
 
@@ -44,7 +44,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(LocalizedConflictException.class)
-    public ResponseEntity<ProblemDetail> handleDbConflict(
+    public ResponseEntity<ProblemDetail> handleConflict(
             LocalizedNotFoundException e,
             Locale locale) {
 
@@ -54,7 +54,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(LocalizedBadRequestException.class)
-    public ResponseEntity<ProblemDetail> handleDbConflict(
+    public ResponseEntity<ProblemDetail> handleBadRequest(
             LocalizedBadRequestException e,
             Locale locale) {
 

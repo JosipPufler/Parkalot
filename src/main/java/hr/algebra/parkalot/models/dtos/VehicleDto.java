@@ -16,7 +16,7 @@ public record VehicleDto(
                 vehicle.getModel(),
                 vehicle.getYear(),
                 vehicle.getLicencePlate(),
-                vehicle.getOwners().stream().map(User::getId).toList(),
+                vehicle.getOwnerships().stream().map(x -> x.getUser().getId()).toList(),
                 vehicle.getEmissionClass()
         );
     }

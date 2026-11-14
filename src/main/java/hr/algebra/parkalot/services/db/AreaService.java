@@ -1,6 +1,5 @@
 package hr.algebra.parkalot.services.db;
 
-import hr.algebra.parkalot.exceptions.AreaGeographyException;
 import hr.algebra.parkalot.exceptions.LocalizedConflictException;
 import hr.algebra.parkalot.models.entities.PermitEligibilityRule;
 import hr.algebra.parkalot.models.enums.LocalizedExceptionKeys;

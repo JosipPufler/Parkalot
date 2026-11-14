@@ -13,7 +13,7 @@ public class CleanerUpperJob {
     private final ParkingCheckLogService parkingCheckLogService;
 
     @Scheduled(cron = "0 7 1 * * *")
-    public void reportCurrentTime() {
+    public void generalCleanup() {
         permitService.cleanUpExpired();
         parkingCheckLogService.cleanup();
     }
