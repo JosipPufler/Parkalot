@@ -1,1 +1,3 @@
+Student project for BRJAKPO
+
 I know my application.properties contains secrets which makes it unsafe to be versioned. I was developing this on 3 different computers and that was the easiest way to sync the keys across them since they were updated and changed a few times. Will be extracted and rotated in a later commit.
