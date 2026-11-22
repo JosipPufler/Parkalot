@@ -1,13 +1,10 @@
 package hr.algebra.parkalot;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class ParkalotApplicationTests {
+class ParkalotApplicationTests extends AbstractIntegrationTest {
 
     @Test
     void contextLoads() {
     }
-
 }

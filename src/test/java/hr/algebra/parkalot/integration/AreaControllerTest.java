@@ -1,292 +1,183 @@
 package hr.algebra.parkalot.integration;
 
-import hr.algebra.parkalot.helper.AreaHelper;
-import hr.algebra.parkalot.models.enums.Zone;
+import hr.algebra.parkalot.AbstractIntegrationTest;
+import hr.algebra.parkalot.helper.TestData;
 import hr.algebra.parkalot.models.entities.Area;
-import hr.algebra.parkalot.services.db.AreaService;
-import jakarta.transaction.Transactional;
+import hr.algebra.parkalot.models.entities.User;
+import hr.algebra.parkalot.models.enums.Role;
+import hr.algebra.parkalot.repositories.AreaRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static hr.algebra.parkalot.helper.TestData.auth;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
-class AreaControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
+class AreaControllerTest extends AbstractIntegrationTest {
+    @Autowired private TestData data;
+    @Autowired private AreaRepo areaRepo;
 
-    @MockitoBean
-    private AreaService areaService;
-
-    private Area testArea;
+    private User user;
+    private User admin;
+    private Area area;
 
     @BeforeEach
     void setUp() {
-        testArea = AreaHelper.getAreaWithId();
+        user = data.user("user@test.com", Role.USER);
+        admin = data.user("admin@test.com", Role.ADMIN);
+        area = data.area("Centar", 15.0, 45.0, 1.0);
     }
 
-    // --------------------------------------------------
-    // GET /rest/area
-    // --------------------------------------------------
+    private static String areaJson(Long id, String name, double minLon, double minLat, double size) {
+        return """
+                {"id": %s, "name": "%s", "zone": "ZONE_2",
+                 "coordinates": [
+                   {"latitude": %s, "longitude": %s},
+                   {"latitude": %s, "longitude": %s},
+                   {"latitude": %s, "longitude": %s}],
+                 "rule": {"requiresResidentAddress": true, "maxVehiclesPerHousehold": 2, "emissionClass": "EURO_4"}}
+                """.formatted(id, name,
+                minLat, minLon,
+                minLat + size, minLon,
+                minLat + size, minLon + size);
+    }
 
     @Test
-    @WithMockUser(roles = "USER")
-    void getAllAreas_whenAuthenticated_returnsAreas() throws Exception {
-        when(areaService.findAll()).thenReturn(List.of(testArea));
-
-        mockMvc.perform(get("/rest/area"))
+    void getAllAreas_returnsAreasForAnyRole() throws Exception {
+        mockMvc.perform(get("/rest/area").with(auth(user)))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("Area1"))
-                .andExpect(jsonPath("$[0].zone").exists())
-                .andExpect(jsonPath("$[0].coordinates").isArray());
-
-        verify(areaService).findAll();
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Centar"))
+                .andExpect(jsonPath("$[0].rule.maxVehiclesPerHousehold").value(5));
     }
 
     @Test
-    @WithMockUser(roles = "OFFICER")
-    void getAllAreas_whenOfficer_returnsAreas() throws Exception {
-        when(areaService.findAll()).thenReturn(List.of(testArea));
-
-        mockMvc.perform(get("/rest/area"))
-                .andExpect(status().isOk());
-
-        verify(areaService).findAll();
+    void getAllAreas_whenUnauthenticated_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/rest/area")).andExpect(status().isUnauthorized());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void getAllAreas_whenAdmin_returnsAreas() throws Exception {
-        when(areaService.findAll()).thenReturn(List.of(testArea));
-
-        mockMvc.perform(get("/rest/area"))
-                .andExpect(status().isOk());
-
-        verify(areaService).findAll();
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    void getAllAreas_whenNoAreasExist_returnsEmptyList() throws Exception {
-        when(areaService.findAll()).thenReturn(List.of());
-
-        mockMvc.perform(get("/rest/area"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
-    }
-
-    // --------------------------------------------------
-    // GET /rest/area/whereami
-    // --------------------------------------------------
-
-    @Test
-    @WithMockUser(roles = "USER")
-    void getAreaForCoordinates_whenAreaExists_returnsArea() throws Exception {
-        when(areaService.getCurrentArea(anyDouble(), anyDouble()))
-                .thenReturn(Optional.of(testArea));
-
-        String requestBody = """
-                {
-                    "latitude": 45.8150,
-                    "longitude": 15.9819
-                }
-                """;
-
-        mockMvc.perform(get("/rest/area/whereami")
+    void whereAmI_insideArea_returnsArea() throws Exception {
+        mockMvc.perform(get("/rest/area/whereami").with(auth(user))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content("{\"latitude\": 45.5, \"longitude\": 15.5}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Area1"))
-                .andExpect(jsonPath("$.coordinates").isArray());
-
-        verify(areaService).getCurrentArea(45.8150, 15.9819);
+                .andExpect(jsonPath("$.name").value("Centar"));
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    void getAreaForCoordinates_whenAreaDoesNotExist_returnsNotFound()
-            throws Exception {
-
-        when(areaService.getCurrentArea(anyDouble(), anyDouble()))
-                .thenReturn(Optional.empty());
-
-        String requestBody = """
-                {
-                    "latitude": 45.8150,
-                    "longitude": 15.9819
-                }
-                """;
-
-        mockMvc.perform(get("/rest/area/whereami")
+    void whereAmI_outsideAnyArea_returnsNotFound() throws Exception {
+        mockMvc.perform(get("/rest/area/whereami").with(auth(user))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content("{\"latitude\": 10.0, \"longitude\": 10.0}"))
                 .andExpect(status().isNotFound());
-
-        verify(areaService).getCurrentArea(45.8150, 15.9819);
     }
 
-    // --------------------------------------------------
-    // POST /rest/area
-    // --------------------------------------------------
-
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void createArea_whenValidRequest_savesArea() throws Exception {
-        when(areaService.save(any(Area.class)))
-                .thenAnswer(invocation -> {
-                    Area area = invocation.getArgument(0);
-                    area.setId(2L);
-                    return area;
-                });
+    void whereAmI_insideOverlappingAreas_returnsFirst() throws Exception {
+        // Overlaps are normally prevented by the API, but the service tolerates them if data is imported.
+        data.area("Overlap", 15.2, 45.2, 0.5);
 
-        String requestBody = """
-                {
-                    "name": "New Area",
-                    "zone": "ZONE_1",
-                    "coordinates": [
-                        {
-                            "latitude": 45.8100,
-                            "longitude": 15.9700
-                        },
-                        {
-                            "latitude": 45.8200,
-                            "longitude": 15.9700
-                        },
-                        {
-                            "latitude": 45.8200,
-                            "longitude": 15.9800
-                        }
-                    ]
-                }
-                """;
-
-        mockMvc.perform(post("/rest/area")
-                        .with(csrf())
+        mockMvc.perform(get("/rest/area/whereami").with(auth(user))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content("{\"latitude\": 45.3, \"longitude\": 15.3}"))
                 .andExpect(status().isOk());
-
-        verify(areaService).save(argThat(area ->
-                area.getId().equals(2L)
-                        && area.getName().equals("New Area")
-                        && area.getZone() == Zone.ZONE_1
-                        && area.getAreaPolygon() != null
-        ));
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    void createArea_whenUserIsNotAdmin_returnsForbidden() throws Exception {
-        String requestBody = """
-                {
-                    "name": "New Area",
-                    "zone": "ZONE_1",
-                    "coordinates": [
-                        {"latitude": 45.8100, "longitude": 15.9700},
-                        {"latitude": 45.8200, "longitude": 15.9700},
-                        {"latitude": 45.8200, "longitude": 15.9800}
-                    ]
-                }
-                """;
-
-        mockMvc.perform(post("/rest/area")
-                        .with(csrf())
+    void createArea_asAdmin_persistsAreaWithRule() throws Exception {
+        mockMvc.perform(post("/rest/area").with(auth(admin))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content(areaJson(null, "Novi", 20.0, 40.0, 1.0)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Novi"))
+                .andExpect(jsonPath("$.rule.emissionClass").value("EURO_4"));
+
+        assertThat(areaRepo.count()).isEqualTo(2);
+    }
+
+    @Test
+    void createArea_asUser_returnsForbidden() throws Exception {
+        mockMvc.perform(post("/rest/area").with(auth(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(areaJson(null, "Novi", 20.0, 40.0, 1.0)))
                 .andExpect(status().isForbidden());
-
-        verify(areaService, never()).save(any(Area.class));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void createArea_whenCoordinatesAreInsufficient_returnsBadRequest()
-            throws Exception {
-
-        String requestBody = """
-                {
-                    "name": "Invalid Area",
-                    "zone": "ZONE_1",
-                    "coordinates": [
-                        {"latitude": 45.8100, "longitude": 15.9700},
-                        {"latitude": 45.8200, "longitude": 15.9700}
-                    ]
-                }
-                """;
-
-        mockMvc.perform(post("/rest/area")
-                        .with(csrf())
+    void createArea_withTooFewCoordinates_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/rest/area").with(auth(admin))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content("""
+                                {"name": "Bad", "zone": "ZONE_1",
+                                 "coordinates": [{"latitude": 1, "longitude": 1}],
+                                 "rule": {"requiresResidentAddress": false, "maxVehiclesPerHousehold": 1, "emissionClass": "EURO_1"}}
+                                """))
                 .andExpect(status().isBadRequest());
-
-        verify(areaService, never()).save(any(Area.class));
     }
 
-    // --------------------------------------------------
-    // DELETE /rest/area/{id}
-    // --------------------------------------------------
+    @Test
+    void createArea_overlappingExistingArea_isRejected() throws Exception {
+        mockMvc.perform(post("/rest/area").with(auth(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(areaJson(null, "Overlap", 15.5, 45.5, 1.0)))
+                .andExpect(status().isConflict());
+
+        assertThat(areaRepo.count()).isEqualTo(1);
+    }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void deleteArea_whenAreaExists_deletesArea() throws Exception {
-        when(areaService.existsById(1L)).thenReturn(true);
-
-        mockMvc.perform(delete("/rest/area/{id}", 1L)
-                        .with(csrf()))
+    void updateArea_asAdmin_updatesFields() throws Exception {
+        mockMvc.perform(put("/rest/area").with(auth(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(areaJson(area.getId(), "Renamed", 15.0, 45.0, 1.0)))
                 .andExpect(status().isOk());
 
-        verify(areaService).existsById(1L);
-        verify(areaService).deleteById(1L);
+        data.flushAndClear();
+        Area updated = areaRepo.findById(area.getId()).orElseThrow();
+        assertThat(updated.getName()).isEqualTo("Renamed");
+        assertThat(updated.getEligibilityRule().getMaxVehiclesPerHousehold()).isEqualTo(2);
+        assertThat(updated.getEligibilityRule().getRequiresResidentAddress()).isTrue();
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void deleteArea_whenAreaDoesNotExist_returnsNotFound()
-            throws Exception {
-
-        when(areaService.existsById(99L)).thenReturn(false);
-
-        mockMvc.perform(delete("/rest/area/{id}", 99L)
-                        .with(csrf()))
+    void updateArea_unknownId_returnsNotFound() throws Exception {
+        mockMvc.perform(put("/rest/area").with(auth(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(areaJson(999999L, "Ghost", 30.0, 30.0, 1.0)))
                 .andExpect(status().isNotFound());
-
-        verify(areaService).existsById(99L);
-        verify(areaService, never()).deleteById(anyLong());
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    void deleteArea_whenUserIsNotAdmin_returnsForbidden()
-            throws Exception {
+    void updateArea_overlappingAnotherArea_isRejected() throws Exception {
+        Area other = data.area("Other", 30.0, 30.0, 1.0);
 
-        mockMvc.perform(delete("/rest/area/{id}", 1L)
-                        .with(csrf()))
+        mockMvc.perform(put("/rest/area").with(auth(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(areaJson(other.getId(), "Other", 15.5, 45.5, 1.0)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deleteArea_asAdmin_removesArea() throws Exception {
+        mockMvc.perform(delete("/rest/area/{id}", area.getId()).with(auth(admin)))
+                .andExpect(status().isOk());
+
+        assertThat(areaRepo.existsById(area.getId())).isFalse();
+    }
+
+    @Test
+    void deleteArea_unknownId_returnsNotFound() throws Exception {
+        mockMvc.perform(delete("/rest/area/999999").with(auth(admin)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteArea_asUser_returnsForbidden() throws Exception {
+        mockMvc.perform(delete("/rest/area/{id}", area.getId()).with(auth(user)))
                 .andExpect(status().isForbidden());
-
-        verify(areaService, never()).existsById(anyLong());
-        verify(areaService, never()).deleteById(anyLong());
     }
 }

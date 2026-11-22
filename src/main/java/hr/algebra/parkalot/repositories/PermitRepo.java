@@ -23,15 +23,14 @@ public interface PermitRepo extends JpaRepository<Permit, Long> {
     List<Permit> findByPaymentTimeIsNullAndCreatedAtBefore(LocalDateTime cutoff);
 
     @Query("""
-    SELECT COUNT(DISTINCT p.vehicle.id)
+    SELECT p
     FROM Permit p
     WHERE p.area.id = :areaId
       AND p.buyer.household.id = :householdId
       AND p.paymentTime IS NOT NULL
       AND p.startDate <= :today
-      AND :today <= :endDate
     """)
-    long countActivePermittedVehiclesByHouseholdAndArea(
+    List<Permit> findStartedPaidPermitsByHouseholdAndArea(
             Long householdId,
             Long areaId,
             LocalDate today

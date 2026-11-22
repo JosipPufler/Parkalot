@@ -37,8 +37,13 @@ public class PermitEligibilityService {
         }
 
         long existingPermits = permitRepo
-                .countActivePermittedVehiclesByHouseholdAndArea(
-                        household.getId(), area.getId(), LocalDate.now());
+                .findStartedPaidPermitsByHouseholdAndArea(
+                        household.getId(), area.getId(), LocalDate.now())
+                .stream()
+                .filter(permit -> !permit.isExpired())
+                .map(permit -> permit.getVehicle().getId())
+                .distinct()
+                .count();
 
         if (existingPermits >= rule.getMaxVehiclesPerHousehold()) {
             throw new LocalizedBadRequestException(LocalizedExceptionKeys.HOUSEHOLD_VEHICLE_LIMIT);

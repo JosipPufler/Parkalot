@@ -38,7 +38,7 @@ public class PermitArchiveController {
     public ResponseEntity<?> getPastPermits() {
         User currentUser = authUtils.requireCurrentUser();
 
-        return ResponseEntity.ok(currentUser.getVehicles().stream()
+        return ResponseEntity.ok(vehicleService.findByOwner(currentUser).stream()
                 .flatMap(x -> permitArchiveService.findByLicencePlate(x.getLicencePlate())
                         .stream().map(PermitArchiveDto::new)).toList());
     }

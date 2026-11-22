@@ -10,6 +10,7 @@ import hr.algebra.parkalot.models.entities.Area;
 import hr.algebra.parkalot.models.entities.Permit;
 import hr.algebra.parkalot.models.entities.User;
 import hr.algebra.parkalot.models.entities.Vehicle;
+import hr.algebra.parkalot.models.entities.VehicleOwnership;
 import hr.algebra.parkalot.models.dtos.PermitDto;
 import hr.algebra.parkalot.services.PayPalService;
 import hr.algebra.parkalot.services.PermitEligibilityService;
@@ -67,7 +68,7 @@ public class PermitController {
         }
 
         List<PermitDto> list = new ArrayList<>();
-        for (Vehicle x : currentUser.getVehicles()) {
+        for (Vehicle x : vehicleService.findByOwner(currentUser)) {
             for (Permit permit : x.getPermits()) {
                 PermitDto permitDto = new PermitDto(permit);
                 list.add(permitDto);
@@ -116,7 +117,8 @@ public class PermitController {
         Area area = areaService.findById(permitRequest.areaId())
                 .orElseThrow(() -> new LocalizedNotFoundException(LocalizedExceptionKeys.AREA_NOT_FOUND, permitRequest.areaId()));
 
-        User buyer = vehicle.getOwners().stream()
+        User buyer = vehicle.getOwnerships().stream()
+                .map(VehicleOwnership::getUser)
                 .min(Comparator.comparing(User::getId))
                 .orElseThrow(() -> new LocalizedNotFoundException(
                         LocalizedExceptionKeys.VEHICLE_NO_OWNERS));
@@ -131,7 +133,7 @@ public class PermitController {
         permitEligibilityService.validateEligibility(buyer, vehicle, area);
 
         permit.setPaymentTime(java.time.LocalDateTime.now());
-        permit.setPaypalId(null);
+        permit.setPaypalId("ADMIN-" + java.util.UUID.randomUUID());
 
         Permit savedPermit = permitService.save(permit);
 

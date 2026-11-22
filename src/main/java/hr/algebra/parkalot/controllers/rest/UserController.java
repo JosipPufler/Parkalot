@@ -27,7 +27,7 @@ public class UserController {
     @PutMapping()
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> updateUser(@RequestBody UserDto userDto) {
-        return HttpUtils.produceOkResponseWithBody(userService.updateUser(userDto));
+        return HttpUtils.produceOkResponseWithBody(new UserDto(userService.updateUser(userDto)));
     }
 
     @DeleteMapping("/{id}")

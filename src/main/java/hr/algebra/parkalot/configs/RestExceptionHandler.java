@@ -45,7 +45,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(LocalizedConflictException.class)
     public ResponseEntity<ProblemDetail> handleConflict(
-            LocalizedNotFoundException e,
+            LocalizedConflictException e,
             Locale locale) {
 
         String message = messageSource.getMessage(e.getMessageKey().getKey(), e.getArguments(), locale);

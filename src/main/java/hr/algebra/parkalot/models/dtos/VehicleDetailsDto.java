@@ -9,11 +9,7 @@ import java.util.List;
 
 public record VehicleDetailsDto(VehicleDto vehicle, List<PermitDto> permits, List<PermitArchiveDto> pastPermits) implements Serializable {
     public VehicleDetailsDto(Vehicle vehicle, List<PermitArchiveDto> pastPermits) {
-        this(new VehicleDto(vehicle), null, pastPermits);
-
-        for (Permit permit : vehicle.getPermits()) {
-            permits.add(new PermitDto(permit));
-        }
+        this(new VehicleDto(vehicle), vehicle.getPermits().stream().map(PermitDto::new).toList(), pastPermits);
 
     }
 }

@@ -118,7 +118,7 @@ public class ViolationController {
 
         Appeal appeal = appealService.save(Mapper.mapAppealRequestToAppeal(appealCreationDto, violation.get(), currentUser));
         AppealDto appealDto;
-        if (!appealCreationDto.evidence().isEmpty())
+        if (appealCreationDto.evidence() != null && !appealCreationDto.evidence().isEmpty())
             appealDto = new AppealDto(appeal,
                     appealService.constructAppealEvidence(appeal, appealCreationDto.evidence()).stream().map(AppealEvidenceDto::new).toList());
         else
@@ -142,7 +142,7 @@ public class ViolationController {
 
         Appeal appeal = appealService.save(Mapper.mapAppealRequestToAppeal(appealCreationDto, violation, user));
         AppealDto appealDto;
-        if (!appealCreationDto.evidence().isEmpty())
+        if (appealCreationDto.evidence() != null && !appealCreationDto.evidence().isEmpty())
             appealDto = new AppealDto(appeal,
                     appealService.constructAppealEvidence(appeal, appealCreationDto.evidence()).stream().map(AppealEvidenceDto::new).toList());
         else
